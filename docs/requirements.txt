@@ -6,6 +6,13 @@ sphinx-examples
 sphinx-proof
 sphinx-hoverxref
 sphinx-togglebutton
-sphinx_copybutton
 myst-nb
-sphinx_thebe
+sphinx-thebe
+sphinx
+sphinx-copybutton
+sphinx-comments
+sphinx-external-toc
+sphinx-design
+sphinx-book-theme
+sphinx-examples
+sphinx-jupyterbook-latex
