@@ -45,7 +45,7 @@ dependencies = [
     "scipy==1.12",
     "seaborn",
     "tqdm",
-    "jupyter-notebook",
+    "notebook",
     "ordered-set",
     "shapely"
 ]
