@@ -11,7 +11,8 @@ build:
       # Generate on-the-fly Sphinx configuration from Jupyter Book's _config.yml
       - "pip install numpy"
       - "pip install ."
-      - "jupyter-book config sphinx docs/"
+      - pip install jupyter-book
+      - "jupyter-book build docs/"
       - echo "Command run at 'pre_create_environment' step"
       - pwd
 
