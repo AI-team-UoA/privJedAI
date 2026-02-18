@@ -154,17 +154,17 @@ Released under the Apache-2.0 license [(see LICENSE.txt)](https://github.com/Nik
 Copyright © 2026 AI-Team, University of Athens
 
 <br>
-
 ::::{grid} 2
 :gutter: 4
 :align: center
 
 :::{grid-item}
 :align: center
-```{image} imgs/Full_logo_white_vertical.png
+```{image} ../imgs/Full_logo_white_vertical.png
 :width: 180px
-:target:https://recitals-project.eu
-:alt: Recitals Logo```
+:target: https://recitals-project.eu
+:alt: Recitals Logo
+```
 
 :::
 
@@ -172,15 +172,11 @@ Copyright © 2026 AI-Team, University of Athens
 :align: center
 ```{image} https://upload.wikimedia.org/wikipedia/commons/thumb/b/b7/Flag_of_Europe.svg/1200px-Flag_of_Europe.svg.png
 :width: 180px
-:target: [https://ec.europa.eu/info/index_en](https://ec.europa.eu/info/index_en)
+:target: https://ec.europa.eu/info/index_en
 :alt: EU Flag
 ```
 :::
 ::::
-
-:::{center}
-This project is being funded in the context of RECITALS, an HORIZON-Europe project.
-:::
 
 <div align="center">
  <br><br>

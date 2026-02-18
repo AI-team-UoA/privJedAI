@@ -7,3 +7,4 @@ sphinx-proof
 sphinx-hoverxref
 sphinx-togglebutton
 sphinx_copybutton
+myst-nb
