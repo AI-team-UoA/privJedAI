@@ -17,7 +17,7 @@ build:
       - pwd
 
 sphinx:
-  configuration: docs/source/conf.py  # Path to your Sphinx conf.py
+  configuration: docs/conf.py  # Path to your Sphinx conf.py
 
 python:
    install:
