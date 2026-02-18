@@ -1,0 +1,20 @@
+# Table of contents
+# Learn more at https://jupyterbook.org/customize/toc.html
+
+format: jb-book
+root: intro
+parts:
+  - caption: Publications & Fundings
+    chapters:
+    - file: pages/edbt2026.md
+      title: EDBT 2026
+    - url: https://recitals-project.eu
+      title: RECITALS - HORIZON-EU
+  - caption: Links
+    chapters:
+    - url: https://github.com/AI-team-UoA/privJedAI
+      title: AI-Team @ University of Athens
+    - url: https://github.com/AI-team-UoA/pyJedAI
+      title: pyJedai
+    - url: https://github.com/scify/JedAIToolkit
+      title: Java JedAIToolkit
