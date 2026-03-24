@@ -102,7 +102,7 @@ class BloomFilter:
         for i, row in tqdm(enumerate(df.itertuples(index=False)),
                         total=total_length,
                         desc=f'Encoding Data with attributes {self.attributes}',
-                        leave=True):
+                        leave=False, position=1):
             bloom_dict[i] = self._create_bloom_dict_for_row(row)
         return BloomEncodedData(data = bloom_dict, length=self.size + self.offset, )  #leng
 
@@ -117,27 +117,34 @@ class BloomFilter:
                 position = (int.from_bytes(segment, 'little') % self.size) + self.offset
                 bf.add(position)
         else:
-
             if len(token) < self.qgrams:
                 token = token.ljust(self.qgrams, '_')
 
             for i in range(len(token) - self.qgrams + 1):
                 qgram_token = token[i:i+self.qgrams]
-                if qgram_token == '_':
-                    continue
+                base_string = f"{qgram_token}{self.salt}".encode("utf-8")
+                hashed = hashlib.sha256(base_string).digest()
+
+                h1 = int.from_bytes(hashed[:16], 'little')
+                h2 = int.from_bytes(hashed[16:], 'little')
+
                 for j in range(self.num_hashes):
-                    salted_token = f"{qgram_token}{j}{self.salt}".encode("utf-8")
-                    hashed = hashlib.sha256(salted_token).digest()
-                    position = (int.from_bytes(hashed, "little") % self.size) + self.offset
+                    combined_hash = (h1 + j * h2) % self.size
+                    position = combined_hash + self.offset
                     bf.add(position)
+                # for j in range(self.num_hashes):
+                #     salted_token = f"{qgram_token}{j}{self.salt}".encode("utf-8")
+                #     hashed = hashlib.sha256(salted_token).digest()
+                #     position = (int.from_bytes(hashed, "little") % self.size) + self.offset
+                #     bf.add(position)
 
         return bf
 
 
     def _salted_string(self, str_to_enc: str) -> List[int]:
         bf = set()
-        for j in range(self.num_hashes):
-            salted_string = (str_to_enc + str(j) +  self.salt).encode("utf-8")
+        for i in range(self.num_hashes):
+            salted_string = (str_to_enc + str(i) +  self.salt).encode("utf-8")
             bf = self._hash_token(bf, salted_string, True)
 
         return [*bf]

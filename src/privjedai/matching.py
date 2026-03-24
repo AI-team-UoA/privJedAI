@@ -9,7 +9,7 @@ from ordered_set import OrderedSet
 from tqdm.auto import tqdm
 import pandas as pd
 
-from privjedai.utils import _dice, _scm, _cosine, _jaccard, _tversky
+from privjedai.utils import _dice, _scm, _cosine, _jaccard
 from privjedai.datamodel import  Block, EncodedData
 from privjedai.encoded_data import BloomEncodedData, HomomorphicEcnodedData
 from privjedai.evaluation import Evaluation
@@ -40,7 +40,7 @@ class Matcher(PPRLFeature):
     def __init__(self,
         batch_size : int = 10_000,
         threshold : float = 0.6,
-        metric : Literal["dice", "scm", 'jaccard', "cosine", "tversky"] = "dice",
+        metric : Literal["dice", "scm", 'jaccard', "cosine"] = "dice",
         attributes : List[str] = None,
     ) -> None:
         super().__init__()
@@ -240,8 +240,7 @@ class Matcher(PPRLFeature):
             "dice" : _dice,
             "scm" : _scm,
             "jaccard": _jaccard,
-            "cosine" : _cosine,
-            "tversky" : _tversky
+            "cosine" : _cosine
         }
 
 

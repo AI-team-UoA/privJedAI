@@ -1,4 +1,4 @@
-    """Evaluation module
+"""Evaluation module
 This file contains all the methods for evaluating every module in pyjedai.
 """
 import cupy as cp

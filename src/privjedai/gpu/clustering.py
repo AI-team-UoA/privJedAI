@@ -327,7 +327,7 @@ class _KiralyVectors:
         index: int,) -> None:
         """Updates the current matches based on a proposal from a
         man."""
-
+        append_to_free_men = -1
         men_len = self.current_matches.shape[0]
         fiance = self.fiances[woman - men_len]
         if fiance == -1:
@@ -339,6 +339,7 @@ class _KiralyVectors:
             fiance_score = self.edge_score[fiance, woman - men_len]
             fiance_index = self.edge_index[fiance, woman - men_len]
             if self.is_uncertain[fiance] or man_score > fiance_score:
+                append_to_free_men = fiance
                 self.current_matches[fiance] = -1
                 self.current_matches[man] = woman
                 self.edge_score[man, woman - men_len] = man_score
@@ -347,9 +348,10 @@ class _KiralyVectors:
                 if not self.is_uncertain[fiance]:
                     self.men_active[fiance_index] = False
             else:
+                append_to_free_men = man
                 self.men_active[index] = False
 
-
+        return append_to_free_men
 
 class KiralyMSMApproximateClustering(AbstractClustering):
     """Implements the Kiraly MSM Approximate Clustering algorithm.
@@ -417,8 +419,9 @@ class KiralyMSMApproximateClustering(AbstractClustering):
                 kv.update_man(man, indices)
             else:
                 man_score = similarities[index]
-                kv.update_current_matches(man_score, man, woman, index)
-
+                append_to_free_men  = kv.update_current_matches(man_score, man, woman, index)
+                if append_to_free_men != -1:
+                    free_men.append(append_to_free_men)
 
         return kv.current_matches
 

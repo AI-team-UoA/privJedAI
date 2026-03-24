@@ -380,6 +380,7 @@ class BloomEncodedData(EncodedData, PPRLFeature):
         Returns:
             Evaluation : Evaluation Object with F1, Recall, Precision etc.
         """
+        self.execution_time = 0.0
         if self.skip_ground_truth:
             raise AttributeError("Can not proceed to evaluation without a ground-truth file."
                     "Data object has not been initialized with the ground-truth file")

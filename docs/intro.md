@@ -14,19 +14,16 @@ privJedAI is a python framework, aiming to offer experts and novice users, robus
 
 # Install
 
-Not Available Yet
-To be implemented using pip
+privJedAI has been tested on Linux OS.
 
-
-<!-- __PyPI__
+__PyPI__
 
 Install the latest version of pyjedai:
 
 ```
-pip install pyjedai
+pip install privjedai
 ```
-More on [PyPI](https://pypi.org/project/pyjedai).
- -->
+More on [PyPI](https://pypi.org/project/privJedAI).
 
 __Git__
 
@@ -48,15 +45,15 @@ docker build -f Dockerfile
 ``` -->
 
 
-<!-- # Tutorials
+# Tutorials
 
-Find all the code of the tutotials in the [pyjedai/docs/tutorials](https://github.com/AI-team-UoA/pyJedAI/tree/main/docs/tutorials) folder.
+Find all the code of the tutotials in the [privjedai/tutorials](https://github.com/AI-team-UoA/pyJedAI/tree/main/docs/tutorials) folder.
 
 ::::{grid}
-:gutter: 3
+:gutter: 2
 
 :::{grid-item-card} Simple use case
-<a href="https://nbviewer.org/github/AI-team-UoA/pyJedAI/blob/main/docs/tutorials/Demo.ipynb">
+<a href="https://nbviewer.org/github/AI-team-UoA/privJedAI/blob/main/tutorials/privJedAI_Intro.ipynb">
 <img align="center" src="https://nbviewer.org/static/img/nav_logo.svg" width=120/>
 </a>
 :::
@@ -67,28 +64,22 @@ Find all the code of the tutotials in the [pyjedai/docs/tutorials](https://githu
 </a>
 :::
 
-:::{grid-item-card} Web Application using Colab
+<!-- :::{grid-item-card} Web Application using Colab
 <a href="https://colab.research.google.com/drive/18VgEOKAc2ObFFxDNb2sjhBLKKsNvfEPo?usp=sharing">
 <img align="center" src="https://3.bp.blogspot.com/-apoBeWFycKQ/XhKB8fEprwI/AAAAAAAACM4/Sl76yzNSNYwlShIBrheDAum8L9qRtWNdgCLcBGAsYHQ/s1600/colab.png" width=120/>
 </a>
-:::
+::: -->
 ::::
 
 
 # Dependencies
 
 <div align="center">
-<img align="center" src="https://upload.wikimedia.org/wikipedia/commons/thumb/e/ed/Pandas_logo.svg/2560px-Pandas_logo.svg.png" width=120/> &nbsp;&nbsp;
+<img align="center" src="https://upload.wikimedia.org/wikipedia/commons/thumb/e/ed/Pandas_logo.svg/250px-Pandas_logo.svg.png" width=120/> &nbsp;&nbsp;
 <img align="center" src="https://upload.wikimedia.org/wikipedia/commons/thumb/3/31/NumPy_logo_2020.svg/1280px-NumPy_logo_2020.svg.png" width=120/> &nbsp;&nbsp;
 <img align="center" src="https://logoeps.com/wp-content/uploads/2012/10/python-logo-vector.png" width=120/> &nbsp;&nbsp;&nbsp;
-<img align="center" src="https://upload.wikimedia.org/wikipedia/commons/thumb/3/38/Jupyter_logo.svg/883px-Jupyter_logo.svg.png" width=70/>  <br>
-<img align="center" src="https://raw.githubusercontent.com/optuna/optuna/master/docs/image/optuna-logo.png" width=150/>
-<img align="center" src="https://upload.wikimedia.org/wikipedia/commons/thumb/8/8a/Plotly_logo_for_digital_final_%286%29.png/1200px-Plotly_logo_for_digital_final_%286%29.png" width=150/>
+<img align="center" src="https://upload.wikimedia.org/wikipedia/commons/thumb/3/38/Jupyter_logo.svg/120px-Jupyter_logo.svg.png" width=70/>  <br>
 <img align="center" src="https://www.fullstackpython.com/img/logos/scipy.png" width=150/>  <br><br>
-<img align="center" src="https://www.kornosk.me/resources/language-model/featured.png" width=150/> &nbsp;&nbsp;&nbsp;
-<img align="center" src="https://repository-images.githubusercontent.com/1349775/202c4680-8f7c-11e9-91c6-745fdcbeffe8" width=150/> &nbsp;&nbsp;&nbsp;
-<img align="center" src="https://networkx.org/_static/networkx_logo.svg" width=150/> &nbsp;&nbsp;&nbsp;
-<img align="center" src="https://raw.githubusercontent.com/RDFLib/OWL-RL/master/OWL-RL.png" width=70/>
 </div>
 
 <br>
@@ -97,19 +88,20 @@ See the full list of dependencies and all versions used, in this [file](https://
 
 
 
-__Status__
+<!-- __Status__
 
 [![Tests](https://github.com/AI-team-UoA/pyJedAI/actions/workflows/tests.yml/badge.svg?branch=main)](https://github.com/AI-team-UoA/pyJedAI/actions/workflows/tests.yml)
 [![made-with-python](https://readthedocs.org/projects/pyjedai/badge/?version=latest)](https://pyjedai.readthedocs.io/en/latest/?badge=latest)
 [![codecov](https://codecov.io/gh/AI-team-UoA/pyjedai/branch/master/graph/badge.svg?token=4QR0X315CL)](https://codecov.io/gh/AI-team-UoA/pyjedai)
-
+ -->
 
 __Statistics & Info__
 
-![PyPI - Downloads](https://img.shields.io/pypi/dm/pyjedai)
-[![PyPI version](https://img.shields.io/pypi/v/pyjedai.svg?logo=pypi&logoColor=FFE873)](https://pypi.org/project/pyjedai/) -->
+![PyPI - Downloads](https://img.shields.io/pypi/dm/privJedAI)
+[![PyPI version](https://img.shields.io/pypi/v/privJedAI.svg?logo=pypi&logoColor=FFE873)](https://pypi.org/project/privJedAI/)
 
-<!-- # Bugs, Discussions & News
+
+# Bugs, Discussions & News
 
 [GitHub Discussions](https://github.com/Nikoletos-K/pyJedAI/discussions) is the discussion forum for general questions and discussions and our recommended starting point. Please report any bugs that you find [here](https://github.com/Nikoletos-K/pyJedAI/issues). -->
 
@@ -133,7 +125,10 @@ Research Associate at [University of Athens](https://en.uoa.gr)
 ::::
 
 ::::{grid}
-:gutter: 2
+:gutter: 3
+:::{grid-item-card} [Dimitrios Karapiperis]()
+Senior Researcher at [International Hellenic University](https://www.ihu.gr/)
+:::
 
 :::{grid-item-card} [George Papadakis](https://gpapadis.wordpress.com)
 Postdoctoral Researcher at [University of Athens](https://en.uoa.gr){bdg-primary}`Entity Resolution expert`
@@ -153,7 +148,10 @@ Released under the Apache-2.0 license [(see LICENSE.txt)](https://github.com/Nik
 
 Copyright © 2026 AI-Team, University of Athens
 
-<br>
+# Acknowledgements
+
+
+
 ::::{grid} 2
 :gutter: 4
 :align: center
@@ -179,7 +177,15 @@ Copyright © 2026 AI-Team, University of Athens
 ::::
 
 <div align="center">
+  <br>
+ <!-- <a href="https://stelar-project.eu">
+  <img align="center" src="https://stelar-project.eu/wp-content/uploads/2022/08/Logo-Stelar-1-f.png" width=180/>
+ </a> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; -->
+ <!-- <a href="https://ec.europa.eu/info/index_en">
+  <img align="left" src="https://upload.wikimedia.org/wikipedia/commons/thumb/b/b7/Flag_of_Europe.svg/1200px-Flag_of_Europe.svg.png" width=140/>
+ </a> -->
  <br><br>
- <b>This project is being funded in the context of <a href="https://recitals-project.eu">RECITALS</a>, an <a href="https://research-and-innovation.ec.europa.eu/funding/funding-opportunities/funding-programmes-and-open-calls/horizon-europe_en">HORIZON-Europe</a> project.</b><br>
+ This work was supported by the <a href="https://research-and-innovation.ec.europa.eu/funding/funding-opportunities/funding-programmes-and-open-calls/horizon-europe_en">Horizon Europe</a> project  <a href="https://recitals-project.eu">RECITALS</a> (Grant No.101168490.).<br>
 </div>
-
+<br>
+<br>

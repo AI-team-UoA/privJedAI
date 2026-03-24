@@ -59,9 +59,6 @@ class ConnectedComponentsClustering(AbstractClustering):
             valid_array = edges
 
         int_valid_array = valid_array.astype(np.int64)
-
-        # sort_idx  = np.argsort(weights[mask][::-1])
-        # int_valid_array = int_valid_array[sort_idx]
         resulting_clusters = numba_isolated_edges(int_valid_array).tolist()
 
         # self.scipi_connected_components(
@@ -309,9 +306,10 @@ class _KiralyVectors:
         """Updates the current matches based on a proposal from a
         man."""
 
+        append_to_free_men = -1
+
         men_len = self.current_matches.shape[0]
         fiance = self.fiances[woman - men_len]
-        append_to_free_men = -1
         if fiance == -1:
             self.current_matches[man] = woman
             self.edge_score[man, woman - men_len] = man_score
@@ -333,7 +331,6 @@ class _KiralyVectors:
                 append_to_free_men = man
                 self.men_active[index] = False
         return append_to_free_men
-
 
 class KiralyMSMApproximateClustering(AbstractClustering):
     """Implements the Kiraly MSM Approximate Clustering algorithm.
@@ -392,7 +389,8 @@ class KiralyMSMApproximateClustering(AbstractClustering):
                 append_to_free_men = kv.update_current_matches(man_score, man, woman, index)
                 if append_to_free_men != -1:
                     free_men.append(append_to_free_men)
-
+        
+        
         return kv.current_matches
 
 

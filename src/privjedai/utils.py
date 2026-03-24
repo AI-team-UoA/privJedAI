@@ -1,7 +1,6 @@
 """Utils methods for many classes"""
-from typing import Dict
+from typing import  Dict
 import numpy as np
-# import cupy as cp
 from privjedai.datamodel import Block
 
 POPCOUNT_TABLE = np.array([bin(x).count('1') for x in range(256)], dtype=np.uint8)
@@ -69,6 +68,7 @@ def _math_dice(intersecntion: int, cadinality_a : int, cardinality_b : int) -> f
     return float(2 * (intersecntion) / (cadinality_a + cardinality_b))
 
 
+
 def _tversky(blooms_1: np.array, blooms_2: np.array, alpha: float = 1, beta: float =  1) -> np.array:
 
     intersection_bytes = np.bitwise_and(blooms_1, blooms_2)
@@ -89,11 +89,10 @@ def _tversky(blooms_1: np.array, blooms_2: np.array, alpha: float = 1, beta: flo
 
     return avg_similarities
 
-
 def _dice(blooms_1 : np.array, blooms_2 : np.array) -> np.array:
 
     intersection_bytes = np.bitwise_and(blooms_1, blooms_2)
-    intersections = np.bitwise_count(intersection_bytes).sum(axis=2)
+    intersections = intersection_bytes.sum(axis=2)
 
     card_1 = np.sum(blooms_1, axis=2)  # (n_candidates, n_attributes)
     card_2 = np.sum(blooms_2, axis=2)  # (n_candidates, n_attributes)
@@ -109,7 +108,7 @@ def _dice(blooms_1 : np.array, blooms_2 : np.array) -> np.array:
 def _jaccard(blooms_1: np.array, blooms_2: np.array):
 
     intersection_bytes = np.bitwise_and(blooms_1, blooms_2)
-    intersections = np.bitwise_count(intersection_bytes).sum(axis=2)
+    intersections = intersection_bytes.sum(axis=2)
 
     # 2. Cardinalities (Count of True)
     card_1 = np.sum(blooms_1, axis=2)
@@ -125,7 +124,7 @@ def _jaccard(blooms_1: np.array, blooms_2: np.array):
 def _cosine(blooms_1: np.array, blooms_2: np.array):
 
     intersection_bytes = np.bitwise_and(blooms_1, blooms_2)
-    intersections = np.bitwise_count(intersection_bytes).sum(axis=2)
+    intersections = intersection_bytes.sum(axis=2)
 
     # 2. Cardinalities (Count of True)
     card_1 = np.sum(blooms_1, axis=2)
@@ -143,11 +142,12 @@ def _scm(blooms_1 : np.array, blooms_2 : np.array) -> np.array:
 
     length = blooms_1.shape[2]
     xor_bytes = np.bitwise_xor(blooms_1, blooms_2)
-    xor_sum = np.bitwise_count(xor_bytes).sum(axis=2)
+    xor_sum = xor_bytes.sum(axis=2)
     matches = length - xor_sum
     scm_per_attr = matches / length
     avg_similarities = np.mean(scm_per_attr, axis=1)
 
     return avg_similarities
+
 
 

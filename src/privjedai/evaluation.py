@@ -495,32 +495,3 @@ class Evaluation:
 
         return _recall_axis, _normalized_auc
 
-
-    def visualize_results_roc(self, results : dict, drop_tp_indices=True) -> None:
-        """For each of the executed workflows,
-        calculates the cumulative recall and normalized AUC based upon true positive indices.
-        Finally, displays the ROC for all of the workflows
-        with proper annotation (each workflow gains a unique identifier).
-
-        Args:
-            results (dict): Nested dictionary of the form [dataset]
-                -> [matcher] -> [executed workflows and their info] / [model] -> [executed -//-]
-        """
-
-        workflows_info : List[Tuple[dict]] = []
-
-        for dataset in results:
-            matchers = results[dataset]
-            for matcher in matchers:
-                matcher_info = matchers[matcher]
-                if isinstance(matcher_info, list):
-                    for workflow_info in matcher_info:
-                        workflows_info.append((workflow_info))
-                else:
-                    for model in matcher_info:
-                        for workflow_info in matcher_info[model]:
-                            workflows_info.append((workflow_info))
-
-        self.visualize_roc(workflows_info, drop_tp_indices=drop_tp_indices)
-
-
