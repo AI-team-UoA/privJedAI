@@ -12,7 +12,8 @@ external_toc_path = '_toc.yml'
 hoverxref_intersphinx = ['sphinxproof']
 html_baseurl = 'http://privjedai.rtfd.io/'
 html_favicon = 'icons8-droid-67.png'
-html_logo = '../documentation/pyjedai.logo.drawio.png'
+html_logo = '_static/privjedai-logo.png'
+html_static_path = ['_static']
 html_sourcelink_suffix = ''
 html_theme = 'sphinx_book_theme'
 html_theme_options = {'search_bar_text': 'Search this book...', 'launch_buttons': {'notebook_interface': 'jupyterlab', 'binderhub_url': 'https://mybinder.org', 'jupyterhub_url': '', 'thebe': True, 'colab_url': 'https://colab.research.google.com'}, 'path_to_docs': 'docs', 'repository_url': 'https://github.com/AI-team-UoA/privJedAI', 'repository_branch': 'main', 'google_analytics_id': '', 'extra_navbar': 'Powered by <a href="https://jupyterbook.org">Jupyter Book</a>', 'extra_footer': '', 'home_page_in_toc': True, 'announcement': '', 'use_repository_button': True, 'use_edit_page_button': False, 'use_issues_button': True}

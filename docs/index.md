@@ -126,6 +126,7 @@ Research Associate at [University of Athens](https://en.uoa.gr)
 
 ::::{grid}
 :gutter: 3
+
 :::{grid-item-card} [Dimitrios Karapiperis]()
 Senior Researcher at [International Hellenic University](https://www.ihu.gr/)
 :::
@@ -158,7 +159,7 @@ Copyright © 2026 AI-Team, University of Athens
 
 :::{grid-item}
 :align: center
-```{image} ../imgs/Full_logo_white_vertical.png
+```{image} imgs/Full_logo_white_vertical.png
 :width: 180px
 :target: https://recitals-project.eu
 :alt: Recitals Logo
