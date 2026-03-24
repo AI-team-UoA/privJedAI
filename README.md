@@ -58,22 +58,15 @@ docker build -f Dockerfile
 
 # Tutorials
 
-Find all the code of the tutotials in the [privjedai/tutorials](https://github.com/AI-team-UoA/pyJedAI/tree/main/docs/tutorials) folder.
+__Open demos are available in:__
 
-::::{grid}
-:gutter: 2
 
-:::{grid-item-card} Simple use case
-<a href="https://nbviewer.org/github/AI-team-UoA/privJedAI/blob/main/tutorials/privJedAI_Intro.ipynb">
-<img align="center" src="https://nbviewer.org/static/img/nav_logo.svg" width=120/>
-</a>
-:::
+<div align="center">
+    <a href="https://nbviewer.org/github/AI-team-UoA/privJedAI/blob/main/tutorials/privJedAI_Intro.ipynb">
+        <img align="center" src="https://nbviewer.org/static/img/nav_logo.svg" width=120/>
+    </a>  &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</div>
 
-:::{grid-item-card} Detailed notebook
-<a href="https://github.com/AI-team-UoA/pyJedAI/blob/main/docs/tutorials/CleanCleanER.ipynb">
-<img align="center" src="https://miro.medium.com/max/1400/1*Edn_LpbSpLeNKfWkEdG2Jg.png" width=120/>
-</a>
-:::
 
 <!-- :::{grid-item-card} Web Application using Colab
 <a href="https://colab.research.google.com/drive/18VgEOKAc2ObFFxDNb2sjhBLKKsNvfEPo?usp=sharing">
@@ -112,9 +105,9 @@ __Statistics & Info__
 [![PyPI version](https://img.shields.io/pypi/v/privJedAI.svg?logo=pypi&logoColor=FFE873)](https://pypi.org/project/privJedAI/)
 
 
-# Bugs, Discussions & News
+<!-- # Bugs, Discussions & News
 
-[GitHub Discussions](https://github.com/Nikoletos-K/pyJedAI/discussions) is the discussion forum for general questions and discussions and our recommended starting point. Please report any bugs that you find [here](https://github.com/Nikoletos-K/pyJedAI/issues). -->
+[GitHub Discussions](https://github.com/Nikoletos-K/pyJedAI/discussions) is the discussion forum for general questions and discussions and our recommended starting point. Please report any bugs that you find [here](https://github.com/Nikoletos-K/pyJedAI/issues). --> -->
 
 
 <!-- # Java - Web Application
@@ -126,30 +119,12 @@ For Java users checkout the initial [JedAI](https://github.com/scify/JedAIToolki
 
 # Team & Authors
 
-::::{grid}
-:gutter: 1
+<img align="right" src="https://github.com/AI-team-UoA/.github/blob/main/AI_LOGO.png?raw=true" alt="pyJedAI" width="200"/>
 
-:::{grid-item-card} [Lefteris Stetsikas](https://github.com/Teris45)
-Research Associate at [University of Athens](https://en.uoa.gr)
-:::
-
-::::
-
-::::{grid}
-:gutter: 3
-
-:::{grid-item-card} [Dimitrios Karapiperis]()
-Senior Researcher at [International Hellenic University](https://www.ihu.gr/)
-:::
-
-:::{grid-item-card} [George Papadakis](https://gpapadis.wordpress.com)
-Postdoctoral Researcher at [University of Athens](https://en.uoa.gr){bdg-primary}`Entity Resolution expert`
-:::
-
-:::{grid-item-card} [Manolis Koubarakis](https://cgi.di.uoa.gr/~koubarak/)
-Professor at [University of Athens](https://en.uoa.gr)
-:::
-::::
+- [Lefteris Stetsikas](https://github.com/Teris45), Research Associate at University of Athens, Greece
+- [Dimitris Karapiperis](), Senior Researcher at [International Hellenic University](https://www.ihu.gr/)
+- [George Papadakis](https://gpapadis.wordpress.com), Senior Researcher at University of Athens, Greece
+- [Manolis Koubarakis](https://cgi.di.uoa.gr/~koubarak/), Professor at University of Athens, Greece
 
 
 Research and development is made under the supervision of Pr. Manolis Koubarakis. This is a research project by the [AI-Team](https://ai.di.uoa.gr) of the Department of Informatics and Telecommunications at the University of Athens.
@@ -164,40 +139,21 @@ Copyright © 2026 AI-Team, University of Athens
 
 
 
-::::{grid} 2
-:gutter: 4
-:align: center
-
-:::{grid-item}
-:align: center
-```{image} imgs/Full_logo_white_vertical.png
-:width: 180px
-:target: https://recitals-project.eu
-:alt: Recitals Logo
-```
-
-:::
-
-:::{grid-item}
-:align: center
-```{image} https://upload.wikimedia.org/wikipedia/commons/thumb/b/b7/Flag_of_Europe.svg/1200px-Flag_of_Europe.svg.png
-:width: 180px
-:target: https://ec.europa.eu/info/index_en
-:alt: EU Flag
-```
-:::
-::::
-
 <div align="center">
-  <br>
- <!-- <a href="https://stelar-project.eu">
-  <img align="center" src="https://stelar-project.eu/wp-content/uploads/2022/08/Logo-Stelar-1-f.png" width=180/>
- </a> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; -->
- <!-- <a href="https://ec.europa.eu/info/index_en">
-  <img align="left" src="https://upload.wikimedia.org/wikipedia/commons/thumb/b/b7/Flag_of_Europe.svg/1200px-Flag_of_Europe.svg.png" width=140/>
- </a> -->
- <br><br>
- This work was supported by the <a href="https://research-and-innovation.ec.europa.eu/funding/funding-opportunities/funding-programmes-and-open-calls/horizon-europe_en">Horizon Europe</a> project  <a href="https://recitals-project.eu">RECITALS</a> (Grant No.101168490.).<br>
+    <hr>
+    <br>
+    <a href="https://stelar-project.eu">
+        <img align="center" src="docs/imgs/Full_logo_white_vertical.png" width=180 height=180/>
+    </a> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+    <a href="https://ec.europa.eu/info/index_en">
+        <img align="center" src="https://upload.wikimedia.org/wikipedia/commons/thumb/b/b7/Flag_of_Europe.svg/1200px-Flag_of_Europe.svg.png" width=140/>
+    </a>
+    <br>
+    <br>
+        <b>This project is being funded in the context of <a href="https://recitals-project.eu">RECITALS</a> that is an <a href="https://research-and-innovation.ec.europa.eu/funding/funding-opportunities/funding-programmes-and-open-calls/horizon-europe_en">HORIZON-Europe</a> project.
+        </b>
+    <br>
 </div>
+
 <br>
 <br>
