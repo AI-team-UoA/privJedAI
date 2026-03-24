@@ -73,7 +73,6 @@ __Open demos are available in:__
 <img align="center" src="https://3.bp.blogspot.com/-apoBeWFycKQ/XhKB8fEprwI/AAAAAAAACM4/Sl76yzNSNYwlShIBrheDAum8L9qRtWNdgCLcBGAsYHQ/s1600/colab.png" width=120/>
 </a>
 ::: -->
-::::
 
 
 # Dependencies
