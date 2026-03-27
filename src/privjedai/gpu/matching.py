@@ -151,10 +151,7 @@ class Matcher(PPRLFeature):
             self.ground_truth = encoded_data.ground_truth
 
         if blocks:
-            self.matcher_config.candidates, self.matcher_config.unique_ids = \
-                self._candidates(blocks)
-        else:
-            self.matcher_config.candidates = self.matcher_config.unique_ids = None
+            self._candidates(blocks)
 
 
         if isinstance(encoded_data, BloomEncodedData):

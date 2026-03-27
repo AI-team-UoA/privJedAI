@@ -2,6 +2,7 @@
 This file contains all the methods for evaluating every module in pyjedai.
 """
 import cupy as cp
+import numpy as np
 from typing import List, Tuple, Dict
 from warnings import warn
 import random
@@ -13,7 +14,7 @@ import pandas as pd
 import seaborn as sns
 
 from privjedai.datamodel import Block, EncodedData
-from privjedai.utils import PredictionData, generate_unique_identifier, batch_pairs
+from privjedai.utils import  batch_pairs
 
 @dataclass
 class Metrics:
