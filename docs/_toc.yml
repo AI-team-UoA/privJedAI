@@ -4,6 +4,10 @@
 format: jb-book
 root: intro
 parts:
+  - caption: Tutorials
+    chapters:
+    - file: tutorials/privJedAI_Intro.ipynb
+      title: Introduction to privJedAI
   - caption: Publications & Fundings
     chapters:
     - file: pages/edbt2026.md

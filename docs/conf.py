@@ -21,6 +21,7 @@ html_title = 'privJedAI'
 intersphinx_mapping = {'ebp': ['https://executablebooks.org/en/latest/', None], 'myst-parser': ['https://myst-parser.readthedocs.io/en/latest/', None], 'myst-nb': ['https://myst-nb.readthedocs.io/en/latest/', None], 'sphinx': ['https://www.sphinx-doc.org/en/master', None], 'nbformat': ['https://nbformat.readthedocs.io/en/latest', None], 'sd': ['https://sphinx-design.readthedocs.io/en/latest', None], 'sphinxproof': ['https://sphinx-proof.readthedocs.io/en/latest/', None]}
 jupyter_cache = ''
 jupyter_execute_notebooks = 'off'
+nb_execution_mode = 'off'
 latex_engine = 'pdflatex'
 mathjax3_config = {'tex': {'macros': {'N': '\\mathbb{N}', 'floor': ['\\lfloor#1\\rfloor', 1], 'bmat': ['\\left[\\begin{array}'], 'emat': ['\\end{array}\\right]']}}}
 myst_enable_extensions = ['amsmath', 'colon_fence', 'deflist', 'dollarmath', 'html_admonition', 'html_image', 'linkify', 'replacements', 'smartquotes', 'substitution']
