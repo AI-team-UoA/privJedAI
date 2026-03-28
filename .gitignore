@@ -3,3 +3,4 @@ src/privjedai/__pycache__/
 src/privJedAI.egg-info/
 src/privjedai/*/__pycache__/
 tutorials/*.pkl
+docs/tutorials/*.pkl
