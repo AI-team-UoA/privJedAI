@@ -119,33 +119,12 @@ class AbstractComparisonCleaning(PPRLFeature):
             Evaluation : Evaluation Object with F1, Recall, Precision etc.
         """
 
-        if self.encoded_data is None:
-            raise AttributeError("Can not proceed to evaluation without data object.")
-
-        if self.encoded_data.skip_ground_truth:
-            raise AttributeError("Can not proceed to evaluation without a ground-truth file."
-                        "Data object has not been initialized with the ground-truth file")
-
-
         eval_obj = Evaluation(self.encoded_data)
-        true_positives = 0
-        total_matching_pairs = 0
-        for block in prediction.values():
-            total_matching_pairs += len(block)
-
-        print(f"Total matching pairs: {total_matching_pairs}")
-
-        for _, (id1, id2) in self.encoded_data.ground_truth.iterrows():
-            id2 = self.encoded_data.bounds[0] + id2
-            if id1 in prediction and id2 in prediction[id1]:
-                true_positives += 1
-
-        eval_obj.calculate_scores(true_positives=true_positives,
-                                  total_matching_pairs=total_matching_pairs)
+        eval_obj.evaluate_candidate_pairs(prediction)
         return eval_obj.report(self.method_configuration(),
-                                export_to_df,
-                                with_classification_report,
-                                verbose)
+                               export_to_df,
+                               with_classification_report,
+                               verbose)
 
     def export_to_df(self, prediction: dict) -> pd.DataFrame:
         """creates a dataframe with the predicted pairs

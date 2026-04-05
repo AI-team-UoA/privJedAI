@@ -5,6 +5,7 @@ from privjedai.datamodel import Block
 
 POPCOUNT_TABLE = np.array([bin(x).count('1') for x in range(256)], dtype=np.uint8)
 
+
 def chi_square(in_array: np.array) -> float:
     """Chi Square Method
 

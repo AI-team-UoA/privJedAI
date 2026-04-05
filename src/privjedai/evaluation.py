@@ -43,9 +43,30 @@ class TPS:
 class Evaluation:
     """Evaluation class. Contains multiple methods for all the fitted & predicted data.
     """
-    def __init__(self, encoded_data: EncodedData) -> None:
+
+
+    def evaluate_candidate_pairs(self, prediction: dict) -> None:
+        total_matching_pairs = 0
+        bounds_offset = self.encoded_data.bounds[0]
+
+        for block in prediction.values():
+            total_matching_pairs += len(block)
+
+        true_positives = sum(
+            1 for id1, id2 in self.encoded_data.ground_truth.values
+            if id1 in prediction and (id2 + bounds_offset) in prediction[id1]
+        )
+        self.calculate_scores(true_positives, total_matching_pairs)
+
+
+
+
+    def __init__(self, encoded_data: EncodedData | None) -> None:
+
         self.metrics : Metrics  = Metrics()
         self.cm : ConfusionMatrix = ConfusionMatrix()
+        if encoded_data is None:
+            raise AttributeError("Can not proceed to evaluation without data object.")
         self.encoded_data: EncodedData = encoded_data
 
         if self.encoded_data.skip_ground_truth:

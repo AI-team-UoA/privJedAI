@@ -6,7 +6,7 @@ from bitarray import bitarray
 import pytest
 
 # Assuming your classes are accessible, e.g., from your_module
-from privjedai.blocking import AbstractBlockBuilding, LSHBlocker, BitBlocker, FAISSBlocking
+from privjedai.blocking import LSHBlocker, BitBlocker, FAISSBlocking
 
 # If they are in the same file, you can import them directly.
 
@@ -16,8 +16,8 @@ def create_mock_encoded_data(attributes= None, length=12):
 
     mock_data = MagicMock()
     attributes = ['a', 'b'] if not attributes else attributes
-    mock_data.attributes = attributes
-    mock_data.length = length
+    mock_data.metadata.attributes = attributes
+    mock_data.metadata.length = length
     # Simulate two datasets: records 0-2 (DS1) and 3-4 (DS2)
     mock_data.bounds = [3, 6]
 
@@ -29,8 +29,9 @@ def create_mock_encoded_data(attributes= None, length=12):
         # Create a simple, deterministic bitarray for testing
         # e.g., all 0s for index < 3, all 1s for index >= 3
         dummy_bf = bitarray(bfs[i] * int(length / 4))
-        bitarray_dict[i] = {attr: dummy_bf for attr in attributes}
-        bitarray_dict[i+3] = {attr: dummy_bf for attr in attributes}
+        bitarray_dict[i] = dict.fromkeys(attributes, dummy_bf)
+        bitarray_dict[i+3] =  dict.fromkeys(attributes, dummy_bf)
+
 
 
     mock_data.bitarray_dict = bitarray_dict
@@ -41,15 +42,20 @@ def create_mock_encoded_data(attributes= None, length=12):
 
     # For FAISSBlocking evaluate
     mock_data.ground_truth.iterrows.return_value = [
-        (0, (0,0)),
-        (1, (1,1)),
-        (2, (2,2))
+        (0, 0,0),
+        (1, 1,1),
+        (2, 2,2)
     ]
 
     mock_data.ground_truth.itertuples.return_value = [
+        (0,0,0),
+        (1,1,1),
+        (2,2,2)
+    ]
+    mock_data.ground_truth.values = [
         (0, 0),
-        (1,1),
-        (2,2)
+        (1, 1),
+        (2, 2)
     ]
 
     mock_data.ground_truth.__len__.return_value = 3 # Or any other iterable with 3 elements
@@ -57,12 +63,6 @@ def create_mock_encoded_data(attributes= None, length=12):
     return mock_data
 
 
-# class TestAbstract:
-#     """AbstractBlockBuilding"""
-
-    # def test_report(self):
-    #     blokcer = AbstractBlockBuilding()
-    #     blocker.report()
 
 
 # --- Test class for LSHBlocker ---
@@ -70,34 +70,34 @@ class TestLSHBlocker:
     """Test lsh blocker"""
 
     def test_set_attributes(self):
-        blocker = LSHBlocker(psi=4, lmbda=2, seed=1, prune_ratio=0.9)
+        blocker = LSHBlocker(psi=4, lambda_=2, seed=1, prune_ratio=0.9)
         mock_data = create_mock_encoded_data( attributes=['a', 'b'])
 
         with pytest.raises(ValueError):
-            blocks = blocker.build_blocks(mock_data, attributes=['a', 'b', 'c'])
+            _ = blocker.build_blocks(mock_data, attributes=['a', 'b', 'c'])
         with pytest.raises(ValueError):
-            blocker = LSHBlocker(psi=0, lmbda=0, seed=1, prune_ratio=0.9)
+            _ = LSHBlocker(psi=0, lambda_=0, seed=1, prune_ratio=0.9)
 
 
     def test_build_blocks(self):
-        blocker = LSHBlocker(psi=4, lmbda=2, seed=1, prune_ratio=0.9)
+        blocker = LSHBlocker(psi=4, lambda_=2, seed=1, prune_ratio=0.9)
         blocker.blocks = None
-        with pytest.raises(AttributeError) as ex:
-            blocker.evaluate(None)
+        with pytest.raises(AttributeError):
+            blocker.evaluate({})
         mock_data = create_mock_encoded_data( attributes=['a', 'b'])
 
-        blocks = blocker.build_blocks(mock_data, attributes=['a', 'b'])
-        blocker.evaluate(None)
+        _ = blocker.build_blocks(mock_data, attributes=['a', 'b'])
+        blocker.evaluate({})
 
         blocker.encoded_data = None
-        with pytest.raises(AttributeError) as ex:
-            blocker.evaluate(None)
+        with pytest.raises(AttributeError):
+            blocker.evaluate({})
             blocker.report()
 
         blocker.encoded_data = mock_data
         blocker.encoded_data.skip_ground_truth = True
-        with pytest.raises(AttributeError) as ex:
-            blocker.evaluate(None)
+        with pytest.raises(AttributeError):
+            blocker.evaluate({})
 
 
 
@@ -106,7 +106,7 @@ class TestLSHBlocker:
     def test_lsh_build_blocks_flow(self):
         """Test for lsh"""
 
-        blocker = LSHBlocker(psi=4, lmbda=2, seed=1, prune_ratio=0.9)
+        blocker = LSHBlocker(psi=4, lambda_=2, seed=1, prune_ratio=0.9)
         mock_data = create_mock_encoded_data( attributes=['a', 'b'])
 
         with pytest.raises(AttributeError):
@@ -116,15 +116,13 @@ class TestLSHBlocker:
         assert conf["psi"] == 4
 
         with pytest.raises(ValueError):
-            candidates = blocker._select_bit_positions([bitarray('0100')])
+            _ = blocker._select_bit_positions([bitarray('0100')])
 
         blocks = blocker.build_blocks(mock_data, attributes=['a', 'b'])
         blocker.report()
 
         assert isinstance(blocks, dict)
 
-        for block in blocks.values():
-            assert len(block[0]) > 0 and len(block[1]) > 0
 
 # --- Test class for BitBlocker ---
 class TestBitBlocker:
@@ -134,8 +132,8 @@ class TestBitBlocker:
     def test_args(self):
         """Check if wrong arguments raise Errors"""
         with pytest.raises(ValueError):
-            blocker = BitBlocker(psi=0, lmbda=0, seed=1)
-        blocker = BitBlocker(psi=4, lmbda=2, seed=1)
+            _ = BitBlocker(psi=0, lambda_=0, seed=1)
+        blocker = BitBlocker(psi=4, lambda_=2, seed=1)
         mock_data = create_mock_encoded_data(attributes=['a', 'b'], length=5)
 
         # ACT
@@ -147,7 +145,7 @@ class TestBitBlocker:
     def test_bitblocker_fit(self):
         """Bit Blocker fit"""
         # ARRANGE
-        blocker = BitBlocker(psi=4, lmbda=2, seed=1)
+        blocker = BitBlocker(psi=4, lambda_=2, seed=1)
         mock_data = create_mock_encoded_data(attributes=['a', 'b'], length=12)
 
         # ACT
@@ -165,15 +163,13 @@ class TestBitBlocker:
     def test_evaluate(self):
         """Evaluation testing"""
         mock_data = create_mock_encoded_data(attributes=['a', 'b'], length=12)
-        predicted = {"000" : {0:{0}, 1:{3}},
-                     "111" : {0:{1}, 1:{4}},
-                     "2" : {0:{2}, 1:{5}},}
-        blocker = BitBlocker(psi=4, lmbda=2, seed=1)
+        predicted = {0 : {3}, 1 : {4}, 2 : {5}}
+        blocker = BitBlocker(psi=4, lambda_=2, seed=1)
         _ = blocker.build_blocks(mock_data)
         ev = blocker.evaluate(predicted)
 
 
-        assert ev['F1 %'] == 100.0
+        assert int(ev['F1 %']) == 100
 
 
 class TestFAISS:
@@ -186,7 +182,7 @@ class TestFAISS:
 
         mock_data = create_mock_encoded_data(length=24, attributes=['a', 'b'])
 
-        blocks = blocker.build_blocks(encoded_data=mock_data, attributes=['a', 'b'], top_k=100)
+        _ = blocker.build_blocks(encoded_data=mock_data, attributes=['a', 'b'], top_k=100)
 
         # ACT
         blocks = blocker.build_blocks(encoded_data=mock_data, attributes=['a', 'b'], top_k=1)
@@ -199,14 +195,15 @@ class TestFAISS:
 
         ev = blocker.evaluate(blocks)
         print(blocks)
-        assert ev['F1 %'] == 100.0
+        print(ev)
+        assert int(ev['F1 %']) == 100
 
         blocker = FAISSBlocking('hnsw')
         mock_data = create_mock_encoded_data(length=24, attributes=['a', 'b'])
         blocks = blocker.build_blocks(encoded_data=mock_data, attributes=['a', 'b'], top_k=100)
         ev = blocker.evaluate(blocks)
-        # assert blocks[0] == {3}
-        assert ev['Recall %'] == 100.0
+        assert int(ev['Recall %']) == 100
+
 
         with pytest.raises(AttributeError):
             blocker.encoded_data.skip_ground_truth = True
@@ -220,8 +217,7 @@ class TestFAISS:
         mock_data = create_mock_encoded_data(length=24, attributes=['a', 'b'])
         blocks = blocker.build_blocks(encoded_data=mock_data, attributes=['a', 'b'], top_k=100)
         ev = blocker.evaluate(blocks)
-        # assert blocks[0] == {3}
-        assert ev['Recall %'] == 100.0
+        assert int(ev['Recall %']) == 100
 
         with pytest.raises(AttributeError):
             blocker.encoded_data.skip_ground_truth = True

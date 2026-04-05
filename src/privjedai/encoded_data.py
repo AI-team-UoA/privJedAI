@@ -21,7 +21,7 @@ class BloomEncodedDataMetadata:
     """Metadata for BloomEncodedData"""
     length : int
     execution_time : float
-    attributes : List[str] = None
+    attributes : list
 
 class BloomEncodedData(EncodedData, PPRLFeature):
     """
@@ -45,11 +45,11 @@ class BloomEncodedData(EncodedData, PPRLFeature):
     def __init__(self, data: Dict[int, Dict[str, List[int]]] = None, length: int = 0):
         """Initialize BloomEncodedData with optional pre-encoded data and bit length."""
         super().__init__()
-        self.inverted_index = None
+        self.inverted_index = {}
         self.skip_ground_truth = True
         if data:
             self.metadata = BloomEncodedDataMetadata(length=length,
-                    execution_time=0.0)
+                    execution_time=0.0, attributes=[])
             self.encoded_dict : Dict[int, Dict[str, List[int]]] = data
             if self.encoded_dict:
                 self.bitarray_dict : Dict[int, Dict[str, bitarray]] = {}

@@ -2,5 +2,6 @@ src/pprl.egg-info/
 src/privjedai/__pycache__/
 src/privJedAI.egg-info/
 src/privjedai/*/__pycache__/
+src/privJedAI.egg-info
 tutorials/*.pkl
 docs/tutorials/*.pkl
