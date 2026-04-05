@@ -5,3 +5,5 @@ src/privjedai/*/__pycache__/
 src/privJedAI.egg-info
 tutorials/*.pkl
 docs/tutorials/*.pkl
+.idea
+src/tests/__pycache__
