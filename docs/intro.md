@@ -1,9 +1,12 @@
 (intro)=
 
-# Overview
+# privJedAI 
+
+## Overview
 
 privJedAI is a python framework, aiming to offer experts and novice users, robust and fast solutions for Privacy Preserving Record Linkage. It is builded using state-of-the-art python frameworks. privJedAI constitutes the sole open-source Link Discovery tool that is capable of exploiting the latest breakthroughs in Deep Learning and NLP techniques, which are publicly available through the Python data science ecosystem. This applies to both blocking and matching, thus ensuring high time efficiency, high scalability as well as high effectiveness, without requiring any labelled instances from the user.
 
+---
 ## Key-Features
 
 - Input data-type independent. Both structured and semi-structured data can be processed.
@@ -12,7 +15,8 @@ privJedAI is a python framework, aiming to offer experts and novice users, robus
 - Utilizes some of the famous and cutting-edge machine learning packages.
 - Offers supervised and un-supervised ML techniques.
 
-# Install
+---
+## Install
 
 privJedAI has been tested on Linux OS.
 
@@ -44,8 +48,8 @@ Available at [Docker Hub](https://hub.docker.com/r/aiteamuoa/pyjedai), or clone 
 docker build -f Dockerfile
 ``` -->
 
-
-# Tutorials
+---
+## Tutorials
 
 Find all the code of the tutotials in the [privjedai/tutorials](https://github.com/AI-team-UoA/pyJedAI/tree/main/docs/tutorials) folder.
 
@@ -71,8 +75,8 @@ Find all the code of the tutotials in the [privjedai/tutorials](https://github.c
 ::: -->
 ::::
 
-
-# Dependencies
+---
+## Dependencies
 
 <div align="center">
 <img align="center" src="https://upload.wikimedia.org/wikipedia/commons/thumb/e/ed/Pandas_logo.svg/250px-Pandas_logo.svg.png" width=120/> &nbsp;&nbsp;
@@ -100,8 +104,8 @@ __Statistics & Info__
 ![PyPI - Downloads](https://img.shields.io/pypi/dm/privJedAI)
 [![PyPI version](https://img.shields.io/pypi/v/privJedAI.svg?logo=pypi&logoColor=FFE873)](https://pypi.org/project/privJedAI/)
 
-
-# Bugs, Discussions & News
+---
+## Bugs, Discussions & News
 
 [GitHub Discussions](https://github.com/Nikoletos-K/pyJedAI/discussions) is the discussion forum for general questions and discussions and our recommended starting point. Please report any bugs that you find [here](https://github.com/Nikoletos-K/pyJedAI/issues). -->
 
@@ -112,8 +116,8 @@ __Statistics & Info__
 
 For Java users checkout the initial [JedAI](https://github.com/scify/JedAIToolkit). There you can find Java based code and a Web Application for interactive creation of ER workflows. <br><br> JedAI constitutes an open source, high scalability toolkit that offers out-of-the-box solutions for any data integration task, e.g., Record Linkage, Entity Resolution and Link Discovery. At its core lies a set of domain-independent, state-of-the-art techniques that apply to both RDF and relational data. -->
 
-
-# Team & Authors
+---
+## Team & Authors
 
 ::::{grid}
 :gutter: 1
@@ -143,13 +147,15 @@ Professor at [University of Athens](https://en.uoa.gr)
 
 Research and development is made under the supervision of Pr. Manolis Koubarakis. This is a research project by the [AI-Team](https://ai.di.uoa.gr) of the Department of Informatics and Telecommunications at the University of Athens.
 
-# License
+---
+## License
 
 Released under the Apache-2.0 license [(see LICENSE.txt)](https://github.com/Nikoletos-K/pyJedAI/blob/main/LICENSE).
 
 Copyright © 2026 AI-Team, University of Athens
 
-# Acknowledgements
+---
+## Acknowledgements
 
 
 
