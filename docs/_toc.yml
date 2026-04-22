@@ -8,6 +8,9 @@ parts:
     chapters:
     - file: tutorials/privJedAI_Intro.ipynb
       title: Introduction to privJedAI
+    - url: https://colab.research.google.com/drive/1uXh8If1xbCt39MXG-ldG9mQgk3VkDafd?usp=sharing
+      title: Introduction to privJedAI on Google Colab
+      
   - caption: Publications & Fundings
     chapters:
     - file: pages/edbt2026.md
