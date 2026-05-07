@@ -1,16 +1,18 @@
 """Evaluation module
 This file contains all the methods for evaluating every module in pyjedai.
 """
-from typing import List, Tuple, Dict
+from typing import List, Tuple
 from warnings import warn
 import random
 from dataclasses import dataclass, field
+from typing import Optional
+from collections import defaultdict
 import matplotlib.pyplot as plt
 import pandas as pd
 import seaborn as sns
 import numpy as np
 
-from privjedai.datamodel import Block, EncodedData
+from privjedai.datamodel import EncodedData
 from privjedai.utils import batch_pairs
 
 @dataclass
@@ -34,7 +36,7 @@ class ConfusionMatrix:
 class TPS:
     """TPS Class"""
     tps_found : int = 0
-    duplicate_emitted : dict = None
+    duplicate_emitted : Optional[dict] = None
     tps_indices: list = field(default_factory=list)
 
 
@@ -86,7 +88,7 @@ class Evaluation:
     def _set_total_matching_pairs(self, total_matching_pairs) -> None:
         self.cm.total_matching_pairs = total_matching_pairs
 
-    def calculate_scores(self, true_positives=None, total_matching_pairs=None) -> None:
+    def calculate_scores(self, true_positives=0, total_matching_pairs=0) -> None:
         """
         Calculate evaluation metrics for duplicate detection.
 
@@ -104,11 +106,8 @@ class Evaluation:
                 - true_positives, false_positives, false_negatives, true_negatives
                 - num_of_true_duplicates, total_matching_pairs
         """
-        if true_positives is not None:
-            self.cm.true_positives = true_positives
-
-        if total_matching_pairs is not None:
-            self.cm.total_matching_pairs = total_matching_pairs
+        self.cm.true_positives = true_positives
+        self.cm.total_matching_pairs = total_matching_pairs
 
         if self.cm.total_matching_pairs == 0:
             warn("Evaluation: No matches found", Warning)
@@ -125,7 +124,7 @@ class Evaluation:
                 self.cm.false_negatives - self.cm.num_of_true_duplicates
             self.metrics.precision = self.cm.true_positives / self.cm.total_matching_pairs
             self.metrics.recall = self.cm.true_positives / self.cm.num_of_true_duplicates
-            if self.metrics.precision == 0.0 or self.metrics.recall == 0.0:
+            if self.metrics.precision == 0 or self.metrics.recall == 0:
                 self.metrics.f1 = 0.0
             else:
                 self.metrics.f1 = 2*((self.metrics.precision*self.metrics.recall)/
@@ -137,7 +136,7 @@ class Evaluation:
             export_to_df=False,
             with_classification_report=False,
             verbose=True
-        ) -> any:
+        ) -> dict | pd.DataFrame:
         """
         Generate and display evaluation results report.
 
@@ -187,6 +186,7 @@ class Evaluation:
                 f"\tRecall:    {self.metrics.recall*100:9.2f}%\n"
                 f"\tF1-score:  {self.metrics.f1*100:9.2f}%"
             )
+
             print('\u2500' * 123)
             if with_classification_report:
                 print(f"Classification report:\n"
@@ -222,8 +222,6 @@ class Evaluation:
 
         _limit = self.encoded_data.bounds[0]
         _d2_limit = self.encoded_data.bounds[1]
-        # print(clusters)
-        # all_gt_ids: set = set(range(_d2_limit))
         entity_index = np.full(_d2_limit, -1, dtype=np.int32)
 
         if not clusters:
@@ -258,24 +256,24 @@ class Evaluation:
 
         # return entity_index
 
-    def create_entity_index_from_blocks(
-            self,
-            blocks: Dict[any, Block]
-    ) -> dict:
-        """Used for evaluating blocking techniques. Evaluating only for 2 datasets"""
-        entity_index : Dict[int, set] = {}
-        for block_id, block in blocks.items():
-            for entity_id in block.entities['D0']:
-                entity_index.setdefault(entity_id, set())
-                entity_index[entity_id].add(block_id)
-
-            for entity_id in block.entities['D1']:
-                entity_index.setdefault(entity_id, set())
-                entity_index[entity_id].add(block_id)
-
-            self.cm.total_matching_pairs += len(block.entities['D0'])*len(block.entities['D1'])
-
-        return entity_index
+    # def create_entity_index_from_blocks(
+    #         self,
+    #         blocks: Dict[any, Block]
+    # ) -> dict:
+    #     """Used for evaluating blocking techniques. Evaluating only for 2 datasets"""
+    #     entity_index : Dict[int, set] = {}
+    #     for block_id, block in blocks.items():
+    #         for entity_id in block.entities['D0']:
+    #             entity_index.setdefault(entity_id, set())
+    #             entity_index[entity_id].add(block_id)
+    #
+    #         for entity_id in block.entities['D1']:
+    #             entity_index.setdefault(entity_id, set())
+    #             entity_index[entity_id].add(block_id)
+    #
+    #         self.cm.total_matching_pairs += len(block.entities['D0'])*len(block.entities['D1'])
+    #
+    #     return entity_index
 
     def confusion_matrix(self):
         """Generates a confusion matrix based on the classification report.
@@ -516,3 +514,18 @@ class Evaluation:
 
         return _recall_axis, _normalized_auc
 
+    def evaluate_blocks(self, blocks_with_keys: np.ndarray):
+        total_matching_blocks = blocks_with_keys.shape[0]
+        id_to_keys = defaultdict(set)
+        for key, id_ in blocks_with_keys:
+            id_to_keys[id_].add(key)
+
+        true_positives = 0
+        bounds_offset = self.encoded_data.bounds[0]
+
+        for id1, id2 in self.encoded_data.ground_truth.values:
+            if id1 in id_to_keys and (id2 + bounds_offset) in id_to_keys:
+                if not id_to_keys[id1].isdisjoint(id_to_keys[id2 + bounds_offset]):
+                    true_positives += 1
+
+        self.calculate_scores(true_positives, total_matching_blocks)
