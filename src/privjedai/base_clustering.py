@@ -733,7 +733,7 @@ class AbstractClustering(PPRLFeature):
 
 
     def evaluate(self,
-            prediction: dict,
+            prediction: list,
             export_to_df: bool = False,
             with_classification_report: bool = False,
             verbose: bool = True) -> any:
