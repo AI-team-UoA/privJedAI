@@ -7,3 +7,6 @@ tutorials/*.pkl
 docs/tutorials/*.pkl
 .idea
 src/tests/__pycache__
+src/privJedAI_Intro.ipynb
+src/test_bitblocker.py
+src/*.pkl

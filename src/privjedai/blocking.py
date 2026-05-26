@@ -1,4 +1,5 @@
 """PPRL Blocking Methods"""
+import math
 import random
 from collections import defaultdict
 from typing import List, Literal, Dict, Union, Any
@@ -26,6 +27,7 @@ class AbstractBlockProcessing(PPRLFeature):
         self.attributes: list = []
         self.encoded_data: EncodedData | None = None
         self.execution_time: float = 0.0
+        self.blocks_with_keys : np.ndarray | None = None
 
     def report(self) -> None:
         """Prints Block Building method configuration
@@ -66,6 +68,27 @@ class AbstractBlockProcessing(PPRLFeature):
                                export_to_df,
                                with_classification_report,
                                verbose)
+    def evaluate_blocks(self,
+                        export_to_df : bool = False,
+                        with_classification_report: bool = False,
+                        verbose: bool = True) -> dict:
+        """Evaluate the generated blocks using the evaluate method.
+
+        Args:
+            export_to_df (bool): Whether to export the evaluation results as a DataFrame.
+            with_classification_report (bool): Whether to include a classification report in the evaluation output.
+            verbose (bool): Whether to print detailed evaluation results to the console.
+
+        Returns:
+            dict: The evaluation results, which may include metrics such as F1-score, recall, precision, and optionally a classification report.
+        """
+
+        if self.blocks_with_keys is None:
+            raise ValueError("Blocks have not been generated yet. Please run build_blocks() first.")
+
+        eval_obj = Evaluation(self.encoded_data)
+        eval_obj.evaluate_blocks(self.blocks_with_keys)
+        return eval_obj.report(self.method_configuration(), export_to_df, with_classification_report, verbose)
 
 
 
@@ -79,6 +102,29 @@ class AbstractBlockProcessing(PPRLFeature):
             if len(block) != 0:
                 new_blocks[key] = block
         return new_blocks
+
+    @staticmethod
+    def _clean_blocks_with_keys(blocks_with_keys: np.ndarray,
+                                limit_: int) -> np.ndarray:
+
+
+        mask_1 = blocks_with_keys[:, 1] < limit_
+        mask_2 = blocks_with_keys[:, 1] >= limit_
+
+        blocks_1 = np.unique(blocks_with_keys[mask_1, 0])
+        blocks_2 = np.unique(blocks_with_keys[mask_2, 0])
+
+        valid_blocks_id = np.intersect1d(blocks_1, blocks_2)
+        final_mask = np.isin(blocks_with_keys[:, 0],
+                             valid_blocks_id,
+                             assume_unique=True)
+
+        return blocks_with_keys[final_mask]
+
+
+
+
+
 
 
 class AbstractBlockBuilding(AbstractBlockProcessing):
@@ -108,24 +154,34 @@ class AbstractBlockBuilding(AbstractBlockProcessing):
     def _create_blocks(self) -> Dict[int, set]:
         blocks_d0 = defaultdict(list)
         blocks_d1 = defaultdict(list)
+
+        block_key_block_id = []
         for idx, bloom_filters in self.encoded_data.bitarray_dict.items():
             record_keys = self._get_record_keys(bloom_filters)
 
             if idx < self.encoded_data.bounds[0]:
                 for key in record_keys:
                     blocks_d0[key].append(idx)
+                    block_key_block_id.append((key, idx))
             else:
                 for key in record_keys:
                     blocks_d1[key].append(idx)
+                    block_key_block_id.append((key, idx))
 
         candidate_pairs = defaultdict(set)
 
         common_keys = blocks_d0.keys() & blocks_d1.keys()
 
+
+        filtered_pairs = []
         for key in common_keys:
             d1_candidates = blocks_d1[key]
             for d0_id in blocks_d0[key]:
                 candidate_pairs[d0_id].update(d1_candidates)
+            filtered_pairs.extend((key, idx) for idx in blocks_d0[key])
+            filtered_pairs.extend((key, idx) for idx in blocks_d1[key])
+
+        self.blocks_with_keys = np.array(filtered_pairs)
 
         return candidate_pairs
 
@@ -168,16 +224,12 @@ class AbstractBlockBuilding(AbstractBlockProcessing):
         self.blocks = self._clean_blocks(blocks)
         self.execution_time = time.time() - _start_time
 
+        if self.blocks_with_keys is not None:
+            self.blocks_with_keys = self._clean_blocks_with_keys(self.blocks_with_keys, self.encoded_data.bounds[0])
+            self.encoded_data.set_blocks_with_keys(self.blocks_with_keys)
+
         return self.blocks
 
-    # def _clean_blocks(self, blocks: dict):
-    #     cleaned_blocks = {}
-    #     for key, block in blocks.items():
-    #         if 0 not in block or 1 not in block:
-    #             continue
-    #         cleaned_blocks[key] = block
-    #
-    #     return cleaned_blocks
 
     @abstractmethod
     def _fit(self) -> None:
@@ -219,7 +271,7 @@ class LSHBlocker(AbstractBlockBuilding):
             prune_ratio: float = 0.6,
             prune_sample: int = 1000,
             seed: int = 42
-    ):  # pylint: disable=too-many-positional-arguments disable=too-many-arguments
+    ):
         """
         Initialize LSHBlocker
 
@@ -321,6 +373,72 @@ class BitBlocker(AbstractBlockBuilding):
     _method_info = "BitBlocker"
     _method_short_name = "BitBlocker"
 
+    @staticmethod
+    def auto_psi_lambda(encoded_data: BloomEncodedData,
+                        attributes : List = None,
+                        threshold: float = 0.5,
+                        delta: float = 0.1,
+                        max_lambda_: int = 150
+                        ) -> dict:
+        """
+        Estimate blocking parameters `psi` and `lambda_` for `BitBlocker`.
+
+        This method computes parameter values used to generate blocking keys from
+        Bloom-filter-encoded records. It searches for the largest feasible `psi`
+        (number of sampled bits per key) such that the corresponding `lambda_`
+        (number of hash tables / keys per record), derived from the target
+        probability constraints, does not exceed `max_lambda_`.
+
+        Args:
+            encoded_data (BloomEncodedData):
+                Encoded dataset containing Bloom filter metadata.
+            attributes (List, optional):
+                Subset of attributes to consider. If `None`, all available encoded
+                attributes are used.
+            threshold (float, optional):
+                Percentage of Hamming Distance Threshold (max allowed differences).
+                Defaults to `0.5`.
+            delta (float, optional):
+                Target upper bound for failure probability when deriving `lambda_`.
+                Defaults to `0.1`.
+            max_lambda_ (int, optional):
+                Maximum allowed value for `lambda_`. The search stops once this bound
+                is exceeded. Defaults to `150`.
+
+        Returns:
+            dict:
+                Dictionary with selected parameters:
+                - `'psi'` (int): selected number of sampled bit positions per key.
+                - `'lambda_'` (int): selected number of blocking keys (hash tables).
+        """
+        bloom_size = encoded_data.metadata.length
+        attr_len = len(attributes) if attributes else len(encoded_data.metadata.attributes)
+
+
+        m = bloom_size * attr_len
+        t = int(threshold * m)
+        p = 1 - (t / m)
+
+        best_psi = 1
+        best_lambda_ = 1
+        
+        for k in range(1, m):
+            probability_of_no_collision_in_one_table = 1 - (p**best_psi)
+            if (probability_of_no_collision_in_one_table <= 0
+                    or probability_of_no_collision_in_one_table >= 1):
+                break
+            lambda_ = math.ceil(math.log(delta) / math.log(probability_of_no_collision_in_one_table))
+            if lambda_ > max_lambda_:
+                break
+            best_psi = k
+            best_lambda_ = lambda_
+
+
+        return {'psi' : best_psi, 'lambda_': best_lambda_}
+
+
+
+
     def __init__(self,
                  psi: int = 36,
                  lambda_: int = 3,
@@ -362,6 +480,7 @@ class BitBlocker(AbstractBlockBuilding):
             block_keys.append(table_block * len(self.hash_indices) + i)
 
         return block_keys
+
 
 
 class FAISSBlocking(AbstractBlockBuilding):
