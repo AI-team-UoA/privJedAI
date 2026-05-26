@@ -39,6 +39,7 @@ class BloomEncodedData(EncodedData, PPRLFeature):
     bounds : List[int]
     inverted_index : Dict[int, Dict[str, set]]
     candidate_pairs: set
+    blocks_with_keys: np.ndarray | None = None
     """inverted_index :   position_of_bit : entities {D0: x,y,z,...} and {D1: x2,y2,z2,...}"""
     skip_ground_truth : bool
 
@@ -95,6 +96,10 @@ class BloomEncodedData(EncodedData, PPRLFeature):
 
         self.ground_truth = df
         self.skip_ground_truth = False
+
+    def set_blocks_with_keys(self, blocks_with_keys):
+        self.blocks_with_keys = blocks_with_keys
+
 
     def _get_dataset(self, idx: int) -> int:
         if idx >= self.bounds[0]:

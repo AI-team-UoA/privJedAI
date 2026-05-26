@@ -103,6 +103,29 @@ class AbstractBlockProcessing(PPRLFeature):
                 new_blocks[key] = block
         return new_blocks
 
+    @staticmethod
+    def _clean_blocks_with_keys(blocks_with_keys: np.ndarray,
+                                limit_: int) -> np.ndarray:
+
+
+        mask_1 = blocks_with_keys[:, 1] < limit_
+        mask_2 = blocks_with_keys[:, 1] >= limit_
+
+        blocks_1 = np.unique(blocks_with_keys[mask_1, 0])
+        blocks_2 = np.unique(blocks_with_keys[mask_2, 0])
+
+        valid_blocks_id = np.intersect1d(blocks_1, blocks_2)
+        final_mask = np.isin(blocks_with_keys[:, 0],
+                             valid_blocks_id,
+                             assume_unique=True)
+
+        return blocks_with_keys[final_mask]
+
+
+
+
+
+
 
 class AbstractBlockBuilding(AbstractBlockProcessing):
     """Abstract class for the block building method
@@ -201,16 +224,12 @@ class AbstractBlockBuilding(AbstractBlockProcessing):
         self.blocks = self._clean_blocks(blocks)
         self.execution_time = time.time() - _start_time
 
+        if self.blocks_with_keys is not None:
+            self.blocks_with_keys = self._clean_blocks_with_keys(self.blocks_with_keys, self.encoded_data.bounds[0])
+            self.encoded_data.set_blocks_with_keys(self.blocks_with_keys)
+
         return self.blocks
 
-    # def _clean_blocks(self, blocks: dict):
-    #     cleaned_blocks = {}
-    #     for key, block in blocks.items():
-    #         if 0 not in block or 1 not in block:
-    #             continue
-    #         cleaned_blocks[key] = block
-    #
-    #     return cleaned_blocks
 
     @abstractmethod
     def _fit(self) -> None:

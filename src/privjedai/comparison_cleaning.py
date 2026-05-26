@@ -35,7 +35,6 @@ class AbstractComparisonCleaning(PPRLFeature):
     def process(
             self,
             encoded_data: BloomEncodedData,
-            adjacent_bits : int = 1
     ) -> dict:
         """Main method for comparison cleaning
 
@@ -50,11 +49,14 @@ class AbstractComparisonCleaning(PPRLFeature):
 
         self.candidate_pairs : Dict[int, set] = defaultdict(set)
 
-        self.entity_ids, self.block_keys, = encoded_data.get_entity_id_block_key_pairs(
-                                                adjacent_bits
-                                            )
+        # self.entity_ids, self.block_keys, = encoded_data.get_entity_id_block_key_pairs(
+        #                                         adjacent_bits
+        #                                     )
+        #
 
 
+        self.entity_ids = encoded_data.blocks_with_keys[:,1]
+        self.block_keys = encoded_data.blocks_with_keys[:,0]
         entity_indices = self.entity_ids
 
         num_of_entities = len(self.encoded_data.encoded_dict)
