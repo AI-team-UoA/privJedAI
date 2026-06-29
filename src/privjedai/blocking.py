@@ -528,7 +528,7 @@ class FAISSBlocking(AbstractBlockBuilding):
             for attr_bitarrays in bitarray_dict.values()
         ]
 
-        init_vector = np.array([np.frombuffer(b.tobytes(), dtype=np.uint8)
+        init_vector = np.ascontiguousarray([np.frombuffer(b.tobytes(), dtype=np.uint8)
                            for b in bitarray_list], dtype=np.uint8)
 
         return init_vector, bitarray_list
@@ -541,7 +541,7 @@ class FAISSBlocking(AbstractBlockBuilding):
         if 'hnsw' == self.configuration['index_type']:
             self.index = faiss.IndexBinaryHNSW(vector_size,
                                    self.configuration.get('hnsw_m', 32))
-            self.index.metric_type = faiss.METRIC_Jaccard
+            # self.index.metric_type = faiss.METRIC_Jaccard
         elif 'multihash' == self.configuration['index_type']:
             lambda_: int = 8
             psi = vector_size // lambda_
