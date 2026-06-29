@@ -29,8 +29,23 @@ class Evaluation(BaseEvaluation):
         )
         self.calculate_scores(true_positives, total_matching_pairs)
 
-    def evaluate_blocks(self, blocks_with_keys: np.ndarray):
-        total_matching_blocks = blocks_with_keys.shape[0]
+    def evaluate_blocks(self, blocks_with_keys: np.ndarray, limit_: int):
+
+        unique_keys, inverse_keys = np.unique(blocks_with_keys[:, 0],  return_inverse=True)
+        minlength = unique_keys.shape[0]
+
+
+        entity_1_keys = inverse_keys[blocks_with_keys[:, 1] < limit_]
+        entity_2_keys = inverse_keys[blocks_with_keys[:, 1] >= limit_]
+
+
+        cnt_entity_1_blocks = np.bincount(entity_1_keys, minlength=minlength)
+        cnt_entity_2_blocks = np.bincount(entity_2_keys, minlength=minlength)
+
+        blocks_cardinalities = cnt_entity_1_blocks * cnt_entity_2_blocks
+        total_matching_blocks = np.sum(blocks_cardinalities)
+
+        # total_matching_blocks = blocks_with_keys.shape[0]
         id_to_keys = defaultdict(set)
         for key, id_ in blocks_with_keys:
             id_to_keys[id_].add(key)

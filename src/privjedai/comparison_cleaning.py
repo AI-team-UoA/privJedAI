@@ -708,18 +708,21 @@ class WeightedNodePruning(WeightedEdgePruning):
         self._average_weight: np.array
         self._node_centric = True
 
+    def _create_mask(self, c: coo_matrix):
+        weights = c.data
+
+        mask = (self._average_weight[c.row] <= weights) | \
+               (self._average_weight[c.col + self.encoded_data.bounds[0]] <= weights)
+
+        mask = mask & (c.row < c.col + self.encoded_data.bounds[0])
+        mask = mask & (weights > 0)
+
+        return mask
 
 
     def _prune_edges(self) -> dict:
         c = self._weights.tocoo()
-        weights = c.data
-
-        mask = (self._average_weight[c.row] <= weights) | \
-            (self._average_weight[c.col + self.encoded_data.bounds[0]] <= weights)
-
-
-        mask = mask & (c.row < c.col + self.encoded_data.bounds[0])
-        mask = mask & (weights > 0)
+        mask = self._create_mask(c)
         valid_rows = c.row[mask]
         valid_cols = c.col[mask] + self.encoded_data.bounds[0]
 
@@ -779,13 +782,21 @@ class BLAST(WeightedNodePruning):
         edge_threshold = (self._average_weight[entity_id] + self._average_weight[neighbor_id]) / 4
         return edge_threshold <= weight and entity_id < neighbor_id
 
-    def _update_threshold(self, entity_id: int) -> None:
-        if entity_id not in self._entity_index:
-            return
-        self._average_weight[entity_id] = 0.0
-        for neighbor_id in self._valid_entities:
-            self._average_weight[entity_id] = \
-                max(self._average_weight[entity_id], self._get_weight(entity_id, neighbor_id))
+    def _create_mask(self, c: coo_matrix):
+        weights = c.data
+        edge_threshold = (self._average_weight[c.row] + self._average_weight[c.col + self.encoded_data.bounds[0]]) / 4
+        mask = (edge_threshold <= weights) & (c.row < c.col + self.encoded_data.bounds[0])
+        mask = mask & (weights > 0)
+        return mask
+
+    def _set_threshold(self):
+        _counters = self._process_entities()
+        self._weights = self._get_weight(_counters)
+
+        _max_d1 = self._weights.max(axis=1).toarray().flatten()
+        _max_d2 = self._weights.max(axis=0).toarray().flatten()
+
+        self._average_weight = np.concatenate([_max_d1, _max_d2])
 
 class ReciprocalWeightedNodePruning(WeightedNodePruning):
     """Meta-blocking method that retains the comparisons\
