@@ -134,6 +134,8 @@ class AbstractBlockBuilding(AbstractBlockProcessing):
     _method_name: str
     _method_info: str
     _method_short_name: str
+    _index_time : float
+    _blocking_time : float
 
     def __init__(self, seed: int = 42):
         super().__init__()
@@ -212,12 +214,22 @@ class AbstractBlockBuilding(AbstractBlockProcessing):
 
         self._fit()
 
+        _end_time = time.time()
+
+        self._index_time = _end_time - _start_time
+
+        _start_time = time.time()
+
+
+
+
         blocks: Dict[int, set] = self._create_blocks()
 
         self.original_num_of_blocks = len(blocks)
         self.blocks = self._clean_blocks(blocks)
-        self.execution_time = time.time() - _start_time
 
+        self.execution_time = time.time() - _start_time + self._index_time
+        self._blocking_time = self.execution_time - self._index_time
         if self.blocks_with_keys is not None:
             self.blocks_with_keys = self._clean_blocks_with_keys(self.blocks_with_keys, self.encoded_data.bounds[0])
             self.encoded_data.set_blocks_with_keys(self.blocks_with_keys)
