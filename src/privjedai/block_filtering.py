@@ -177,6 +177,8 @@ class BlockPurging(AbstractBlockCleaning):
         self.execution_time = time() - start_time
         self.blocks_with_keys = new_blocks_with_keys
 
+        encoded_data.set_blocks_with_keys(new_blocks_with_keys)
+
         return new_blocks_with_keys
 
 
@@ -227,6 +229,8 @@ class BlockPurging(AbstractBlockCleaning):
                 break
 
         self.max_comparisons_per_block = previous_size
+
+        # print(f"Max comparisons per block: {self.max_comparisons_per_block} and smoothing factor: {self.smoothing_factor}")
 
         mask = pair_card <= self.max_comparisons_per_block
 
