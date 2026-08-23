@@ -87,7 +87,7 @@ class AbstractBlockProcessing(PPRLFeature):
             raise ValueError("Blocks have not been generated yet. Please run build_blocks() first.")
 
         eval_obj = Evaluation(self.encoded_data)
-        eval_obj.evaluate_blocks(self.blocks_with_keys)
+        eval_obj.evaluate_blocks(self.blocks_with_keys, self.encoded_data.bounds[0])
         return eval_obj.report(self.method_configuration(), export_to_df, with_classification_report, verbose)
 
 
@@ -134,6 +134,8 @@ class AbstractBlockBuilding(AbstractBlockProcessing):
     _method_name: str
     _method_info: str
     _method_short_name: str
+    _index_time : float
+    _blocking_time : float
 
     def __init__(self, seed: int = 42):
         super().__init__()
@@ -155,18 +157,11 @@ class AbstractBlockBuilding(AbstractBlockProcessing):
         blocks_d0 = defaultdict(list)
         blocks_d1 = defaultdict(list)
 
-        block_key_block_id = []
         for idx, bloom_filters in self.encoded_data.bitarray_dict.items():
             record_keys = self._get_record_keys(bloom_filters)
-
-            if idx < self.encoded_data.bounds[0]:
-                for key in record_keys:
-                    blocks_d0[key].append(idx)
-                    block_key_block_id.append((key, idx))
-            else:
-                for key in record_keys:
-                    blocks_d1[key].append(idx)
-                    block_key_block_id.append((key, idx))
+            target = blocks_d0 if idx < self.encoded_data.bounds[0] else blocks_d1
+            for key in record_keys:
+                target[key].append(idx)
 
         candidate_pairs = defaultdict(set)
 
@@ -175,13 +170,14 @@ class AbstractBlockBuilding(AbstractBlockProcessing):
 
         filtered_pairs = []
         for key in common_keys:
-            d1_candidates = blocks_d1[key]
-            for d0_id in blocks_d0[key]:
-                candidate_pairs[d0_id].update(d1_candidates)
-            filtered_pairs.extend((key, idx) for idx in blocks_d0[key])
-            filtered_pairs.extend((key, idx) for idx in blocks_d1[key])
+            d0_ids = blocks_d0[key]
+            d1_ids = blocks_d1[key]
+            for d0_id in d0_ids:
+                candidate_pairs[d0_id].update(d1_ids)
+            filtered_pairs.extend((key, idx) for idx in d0_ids)
+            filtered_pairs.extend((key, idx) for idx in d1_ids)
 
-        self.blocks_with_keys = np.array(filtered_pairs)
+        self.blocks_with_keys = np.array(filtered_pairs, dtype=np.int64)
 
         return candidate_pairs
 
@@ -218,12 +214,22 @@ class AbstractBlockBuilding(AbstractBlockProcessing):
 
         self._fit()
 
+        _end_time = time.time()
+
+        self._index_time = _end_time - _start_time
+
+        _start_time = time.time()
+
+
+
+
         blocks: Dict[int, set] = self._create_blocks()
 
         self.original_num_of_blocks = len(blocks)
         self.blocks = self._clean_blocks(blocks)
-        self.execution_time = time.time() - _start_time
 
+        self.execution_time = time.time() - _start_time + self._index_time
+        self._blocking_time = self.execution_time - self._index_time
         if self.blocks_with_keys is not None:
             self.blocks_with_keys = self._clean_blocks_with_keys(self.blocks_with_keys, self.encoded_data.bounds[0])
             self.encoded_data.set_blocks_with_keys(self.blocks_with_keys)
@@ -372,6 +378,9 @@ class BitBlocker(AbstractBlockBuilding):
     _method_name = "BitBlocker"
     _method_info = "BitBlocker"
     _method_short_name = "BitBlocker"
+    
+    hash_indices_np: np.ndarray
+    powers_of_2: np.ndarray
 
     @staticmethod
     def auto_psi_lambda(encoded_data: BloomEncodedData,
@@ -423,6 +432,7 @@ class BitBlocker(AbstractBlockBuilding):
         best_lambda_ = 1
         
         for k in range(1, m):
+
             probability_of_no_collision_in_one_table = 1 - (p**best_psi)
             if (probability_of_no_collision_in_one_table <= 0
                     or probability_of_no_collision_in_one_table >= 1):
@@ -471,19 +481,28 @@ class BitBlocker(AbstractBlockBuilding):
         self.rng = random.Random(self.seed)
         self.hash_indices = tuple(self.rng.sample(range(self.hash_len), self.psi)
                                   for _ in range(self.lambda_))
+        
+        self.hash_indices_np = np.array(self.hash_indices)          # (n_tables, bits_per_table)
+        self.powers_of_2 = (2 ** np.arange(self.hash_indices_np.shape[1])).astype(np.int64)
+
+
 
     def _block_record(self, bf: bitarray) -> List[int]:
-        block_keys = []
-        for i, table_indices in enumerate(self.hash_indices):
-            vals = (bf[idx] for idx in table_indices)
-            table_block = sum(b << j for j, b in enumerate(vals))
-            block_keys.append(table_block * len(self.hash_indices) + i)
+        bf_np = np.frombuffer(bf.unpack(), dtype=np.uint8)  # shape: (n_bits,)
 
+        n_tables = len(self.hash_indices)
+
+        bits = bf_np[self.hash_indices_np]  # shape: (n_tables, bits_per_table)
+        block_keys = np.dot(bits, self.powers_of_2)  # shape: (n_tables,)
+        powers = self.powers_of_2
+        table_blocks = bits @ powers  # shape: (n_tables,)
+        block_keys = table_blocks * n_tables + np.arange(n_tables)  # shape:
         return block_keys
 
 
 
 class FAISSBlocking(AbstractBlockBuilding):
+    
     """
     A blocking implementation using FAISS for efficient similarity-based blocking.
 
@@ -521,7 +540,7 @@ class FAISSBlocking(AbstractBlockBuilding):
             for attr_bitarrays in bitarray_dict.values()
         ]
 
-        init_vector = np.array([np.frombuffer(b.tobytes(), dtype=np.uint8)
+        init_vector = np.ascontiguousarray([np.frombuffer(b.tobytes(), dtype=np.uint8)
                            for b in bitarray_list], dtype=np.uint8)
 
         return init_vector, bitarray_list
@@ -534,7 +553,7 @@ class FAISSBlocking(AbstractBlockBuilding):
         if 'hnsw' == self.configuration['index_type']:
             self.index = faiss.IndexBinaryHNSW(vector_size,
                                    self.configuration.get('hnsw_m', 32))
-            self.index.metric_type = faiss.METRIC_Jaccard
+            # self.index.metric_type = faiss.METRIC_Jaccard
         elif 'multihash' == self.configuration['index_type']:
             lambda_: int = 8
             psi = vector_size // lambda_
