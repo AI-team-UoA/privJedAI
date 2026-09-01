@@ -45,8 +45,10 @@ class AbstractBlockProcessing(PPRLFeature):
             f"\nRuntime: {self.execution_time:2.4f} seconds"
         )
 
+
+
     def evaluate(self,
-                 prediction: dict,
+                 prediction: dict = None,
                  export_to_df: bool = False,
                  with_classification_report: bool = False,
                  verbose: bool = True) -> dict:
@@ -63,7 +65,12 @@ class AbstractBlockProcessing(PPRLFeature):
         """
 
         eval_obj = Evaluation(self.encoded_data)
-        eval_obj.evaluate_candidate_pairs(prediction)
+
+        if prediction is None:
+            eval_obj.evaluate_unique_blocks(self.blocks_with_keys, self.encoded_data.bounds[0])
+        else:
+            eval_obj.evaluate_candidate_pairs(prediction)
+
         return eval_obj.report(self.method_configuration(),
                                export_to_df,
                                with_classification_report,
@@ -378,7 +385,7 @@ class BitBlocker(AbstractBlockBuilding):
     _method_name = "BitBlocker"
     _method_info = "BitBlocker"
     _method_short_name = "BitBlocker"
-    
+
     hash_indices_np: np.ndarray
     powers_of_2: np.ndarray
 
@@ -430,7 +437,7 @@ class BitBlocker(AbstractBlockBuilding):
 
         best_psi = 1
         best_lambda_ = 1
-        
+
         for k in range(1, m):
 
             probability_of_no_collision_in_one_table = 1 - (p**best_psi)
@@ -481,7 +488,7 @@ class BitBlocker(AbstractBlockBuilding):
         self.rng = random.Random(self.seed)
         self.hash_indices = tuple(self.rng.sample(range(self.hash_len), self.psi)
                                   for _ in range(self.lambda_))
-        
+
         self.hash_indices_np = np.array(self.hash_indices)          # (n_tables, bits_per_table)
         self.powers_of_2 = (2 ** np.arange(self.hash_indices_np.shape[1])).astype(np.int64)
 
@@ -502,7 +509,7 @@ class BitBlocker(AbstractBlockBuilding):
 
 
 class FAISSBlocking(AbstractBlockBuilding):
-    
+
     """
     A blocking implementation using FAISS for efficient similarity-based blocking.
 
