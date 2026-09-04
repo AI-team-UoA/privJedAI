@@ -13,6 +13,7 @@ project:
     - title: Publications & Fundings
       children:
         - file: pages/edbt2026.md
+        - file: pages/vldb2026.md
 
       
 
