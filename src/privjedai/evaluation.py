@@ -38,6 +38,7 @@ class Evaluation(BaseEvaluation):
         entity_1_keys = np.unique(blocks_with_keys[mask], axis=0)
         entity_2_keys = np.unique(blocks_with_keys[~mask], axis=0)
 
+
         if entity_1_keys.size == 0 or entity_2_keys.size == 0:
             self.calculate_scores(0, 0)
             return
@@ -47,58 +48,67 @@ class Evaluation(BaseEvaluation):
         common_blocks, ind1, ind2 = np.intersect1d(b1, b2, return_indices=True)
 
         if common_blocks.size == 0:
-            self.calculate_scores(0, 0)
-            return
+            return self.calculate_scores(0, 0)
+
 
         c1, c2 = c1[ind1], c2[ind2]
         entity_1_keys = entity_1_keys[np.isin(entity_1_keys[:, 0], common_blocks)]
         entity_2_keys = entity_2_keys[np.isin(entity_2_keys[:, 0], common_blocks)]
+        d1_groups = np.split(entity_1_keys[:, 1], np.cumsum(c1)[:-1])
+        d2_groups = np.split(entity_2_keys[:, 1], np.cumsum(c2)[:-1])
 
-        repeats_for_d1 = np.repeat(c2, c1)
-        e1_pairs = np.repeat(entity_1_keys[:, 1], repeats_for_d1)
-        total_pairs = np.sum(c1.astype(np.int64) * c2)
-        if total_pairs == 0:
-            self.calculate_scores(0, 0)
-            return
+        total_d1_entities = np.unique(entity_1_keys[:,1]).size
+        total_d2_entities = np.unique(entity_2_keys[:,1]).size
 
-        start2 = np.insert(np.cumsum(c2), 0, 0)[:-1]
-        base = np.repeat(np.repeat(start2, c1), repeats_for_d1)
+        max_possible_pairs = total_d1_entities * total_d2_entities
 
-        offsets = np.ones(total_pairs, dtype=int)
-        reset_indices = np.cumsum(repeats_for_d1)[:-1]
+        # 6. --- CHUNKED CARTESIAN PRODUCT & AGGREGATION ---
+        unique_candidate_pairs = np.array([], dtype=np.uint64)
+        pair_buffer = []
+        buffer_size = 0
+        FLUSH_LIMIT = 10_000_000  # Flush memory every 10M pairs
 
-        if reset_indices.size > 0:
-            offsets[reset_indices] = 1 -repeats_for_d1[:-1]
+        for g1, g2 in zip(d1_groups, d2_groups):
+            # Create a grid for the current block
+            e1_grid, e2_grid = np.meshgrid(g1, g2, indexing='ij')
 
-        offsets[0] = 0
-        offsets = np.cumsum(offsets)
+            # Pack (e1, e2) into a single uint64 integer: (e1 << 32) | e2
+            packed_pairs = (e1_grid.ravel().astype(np.uint64) << 32) | e2_grid.ravel().astype(np.uint64)
 
-        e2_pairs = entity_2_keys[base + offsets, 1]
+            pair_buffer.append(packed_pairs)
+            buffer_size += packed_pairs.size
 
-        # 7. --- MEMORY-EFFICIENT DISTINCT PAIRS ---
-        # Stack into a contiguous 2D array
-        pairs = np.empty((total_pairs, 2), dtype=blocks_with_keys.dtype)
-        pairs[:, 0] = e1_pairs
-        pairs[:, 1] = e2_pairs
+            # Periodically deduplicate to prevent memory explosions
+            if buffer_size >= FLUSH_LIMIT:
+                batch = np.concatenate(pair_buffer)
+                unique_candidate_pairs = np.unique(np.concatenate([unique_candidate_pairs, batch]))
+                pair_buffer = []
+                buffer_size = 0
 
-        # Void view trick: Treat rows as single byte-strings.
-        # This bypasses the heavy memory overhead of np.unique(..., axis=0)
-        void_dt = np.dtype((np.void, pairs.dtype.itemsize * 2))
-        void_view = pairs.view(void_dt)
+                if unique_candidate_pairs.size == max_possible_pairs:
+                    return self.calculate_scores(self.encoded_data.ground_truth.values.shape[0],
+                                                 max_possible_pairs)
+
+        # Flush remaining items in the buffer
+        if pair_buffer:
+            batch = np.concatenate(pair_buffer)
+            unique_candidate_pairs = np.unique(np.concatenate([unique_candidate_pairs, batch]))
+
+        total_matching_blocks = unique_candidate_pairs.size
+
+        if total_matching_blocks == max_possible_pairs:
+            return self.calculate_scores(self.encoded_data.ground_truth.values.shape[0],
+                                         total_matching_blocks)
 
 
-        unique_candidates_void = np.unique(void_view)
-
-        true_positives = 0
-        total_matching_blocks = np.unique(void_view).shape[0]
-
-        gt_array = np.ascontiguousarray(self.encoded_data.ground_truth.values, dtype=pairs.dtype)
+        # 7. --- TRUE POSITIVES CALCULATION ---
+        # Pack the ground truth values using the same bitshift logic
+        gt_array = np.ascontiguousarray(self.encoded_data.ground_truth.values)
         gt_array[:, 1] += self.encoded_data.bounds[0]
-        gt_void_view = gt_array.view(void_dt)
+        gt_packed = (gt_array[:, 0].astype(np.uint64) << 32) | gt_array[:, 1].astype(np.uint64)
 
-        true_positives = np.intersect1d(unique_candidates_void, gt_void_view, assume_unique=True).shape[0]
-
-
+        # Intersect the two 1D uint64 arrays
+        true_positives = np.intersect1d(unique_candidate_pairs, gt_packed, assume_unique=True).size
 
         return self.calculate_scores(true_positives, total_matching_blocks)
 
