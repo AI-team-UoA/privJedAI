@@ -531,13 +531,15 @@ class FAISSBlocking(AbstractBlockBuilding):
 
 
 
-    def __init__(self, index_type: Literal['flat', 'hnsw', 'multihash'] = 'flat'):
+
+    def __init__(self, index_type: Literal['flat', 'hnsw', 'multihash', 'ivf'] = 'flat'):
         super().__init__()
         self.top_k: int = 1
         self.encoded_data: BloomEncodedData
         self.neighbors : np.ndarray
         self.distances : np.ndarray
-        self.index: faiss.IndexBinaryHNSW | faiss.IndexBinaryMultiHash | faiss.IndexBinaryFlat
+        self.index: faiss.IndexBinaryHNSW | faiss.IndexBinaryMultiHash | faiss.IndexBinaryFlat | \
+            faiss.IndexBinaryIVF
         self.configuration : Dict[str, Any] = {'index_type' : index_type.lower()}
 
     def _init_vector(self, bitarray_dict: dict):
@@ -556,6 +558,9 @@ class FAISSBlocking(AbstractBlockBuilding):
     def configure_hsnw(self, hnsw_m : int = 32):
         self.configuration['hnsw_m'] = hnsw_m
 
+    def configure_ivf(self, nlist : int = 32):
+        self.configuration['nlist'] = nlist
+
     def _set_index(self, vector_size: int):
         if 'hnsw' == self.configuration['index_type']:
             self.index = faiss.IndexBinaryHNSW(vector_size,
@@ -565,6 +570,9 @@ class FAISSBlocking(AbstractBlockBuilding):
             lambda_: int = 8
             psi = vector_size // lambda_
             self.index = faiss.IndexBinaryMultiHash(vector_size, lambda_, psi)
+        elif 'ivf' == self.configuration['index_type']:
+            nlist: int = self.configuration.get('nlist', 32)
+            self.index = faiss.IndexBinaryIVF(faiss.IndexBinaryFlat(vector_size), vector_size, nlist)
         else:
             self.index = faiss.IndexBinaryFlat(vector_size)
 

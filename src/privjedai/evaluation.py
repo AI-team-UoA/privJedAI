@@ -21,16 +21,33 @@ class Evaluation(BaseEvaluation):
         Args:
             prediction:  Dict   A dictionary where keys are candidate pair IDs and values are lists of predicted matches. Returns:
         """
-        total_matching_pairs = 0
         bounds_offset = self.encoded_data.bounds[0]
+        pred_keys = list(prediction.keys())
+        pred_values = list(prediction.values())
 
-        for block in prediction.values():
-            total_matching_pairs += len(block)
+        pred_lengths = np.array([len(v) for v in pred_values], dtype=np.int32)
+        total_matching_pairs = np.sum(pred_lengths)
 
-        true_positives = sum(
-            1 for id1, id2 in self.encoded_data.ground_truth.values
-            if id1 in prediction and (id2 + bounds_offset) in prediction[id1]
-        )
+        if total_matching_pairs == 0:
+            self.calculate_scores(0, 0)
+            return
+
+        pred_id1 = np.repeat(pred_keys, pred_lengths).astype(np.int64)
+        pred_id2 = np.concatenate(pred_values).astype(np.int64)
+
+        pred_hashed = (pred_id1 << 32) | pred_id2
+
+        gt = np.asarray(self.encoded_data.ground_truth.values, dtype=np.int64)
+
+        if gt.size == 0:
+            self.calculate_scores(0, total_matching_pairs)
+            return
+
+        gt_id1 = gt[:, 0]
+        gt_id2 = gt[:, 1] + bounds_offset
+        gt_hashed = (gt_id1 << 32) | gt_id2
+
+        true_positives = np.isin(pred_hashed, gt_hashed).sum()
         self.calculate_scores(true_positives, total_matching_pairs)
 
     def evaluate_unique_blocks(self, blocks_with_keys: np.ndarray, limit_: int):
