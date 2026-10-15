@@ -37,7 +37,7 @@ class Evaluation(BaseEvaluation):
         if blocks_with_keys.shape[0] == 0:
             self.calculate_scores(0, 0)
             return
-# 1. Filter into D1 and D2
+        # 1. Filter into D1 and D2
         mask = blocks_with_keys[:, 1] < limit_
 
         # np.unique with axis=0 removes duplicate (block, entity) entries early
@@ -58,9 +58,6 @@ class Evaluation(BaseEvaluation):
         m2 = np.isin(b2_keys, common_blocks)
         b2_keys, e2_keys = b2_keys[m2], e2_keys[m2]
 
-        del mask, blocks_with_keys, m1, m2
-        gc.collect()
-
         # 3. Map Blocks and Entities to continuous 0-indexed integers
         unique_blocks, b_idx1 = np.unique(b1_keys, return_inverse=True)
         # b2_keys are guaranteed to be in unique_blocks, so searchsorted is safe & fast
@@ -76,8 +73,7 @@ class Evaluation(BaseEvaluation):
         A = csr_matrix((np.ones(len(b_idx1), dtype=np.int8), (b_idx1, e_idx1)), shape=(num_blocks, len(u_e1)))
         B = csr_matrix((np.ones(len(b_idx2), dtype=np.int8), (b_idx2, e_idx2)), shape=(num_blocks, len(u_e2)))
 
-        del b1_keys, e1_keys, b2_keys, e2_keys, b_idx1, b_idx2
-        gc.collect()
+
 
         # 5. --- BOTTLE-NECK DESTROYER ---
         # Multiply transposed A by B.
@@ -116,8 +112,6 @@ class Evaluation(BaseEvaluation):
         else:
             true_positives = 0
 
-        del A, B, C, u_e1, u_e2, GT_sparse, intersection
-        gc.collect()
 
         return self.calculate_scores(true_positives, total_matching_blocks)
         # repeats_for_d1 = np.repeat(c2, c1)
@@ -258,8 +252,5 @@ class Evaluation(BaseEvaluation):
                 if not id_to_keys[id1].isdisjoint(id_to_keys[id2 + bounds_offset]):
                     true_positives += 1
 
-        del unique_keys, inverse_keys, entity_1_keys, entity_2_keys, cnt_entity_1_blocks, cnt_entity_2_blocks, blocks_cardinalities
-        del id_to_keys
-        gc.collect()
 
         self.calculate_scores(true_positives, total_matching_blocks)
