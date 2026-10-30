@@ -65,6 +65,48 @@ class Matcher(PPRLFeature):
         weights = weights[mask]
         return edges, weights
 
+    def extract_similarities_per_attribute(self,
+                        encoded_data: BloomEncodedData,
+                        blocks: Dict[str, Block] = None,
+                        attributes: List[str] = None) -> tuple:
+
+        """Extracts similarities per attribute"""
+        self.encoded_data = encoded_data
+        self.matcher_config.attributes = attributes if attributes else encoded_data.metadata.attributes
+
+        if not encoded_data.skip_ground_truth:
+            self.ground_truth = encoded_data.ground_truth
+
+        if blocks:
+            self._candidates(blocks)
+
+        self._method_info = """Matching with Bloom Filters"""
+
+
+        # Initialize variables to hold your results before the loop
+        all_similarity_weights = []
+        final_edges = None
+
+        for attr in self.matcher_config.attributes:
+            n_candidates = 0
+            bloom_matrix = self._predict_create_bloom_matrix([attr], encoded_data)
+            if self.matcher_config.unique_ids is not None:
+                n_candidates, unique_ids_arr, idx_pairs = self._get_unique_ids()
+                edges, weights = self._match_all(n_candidates, bloom_matrix, unique_ids_arr, idx_pairs)
+            else:
+                n_candidates, unique_ids_arr = self._get_unique_ids_dense()
+                edges, weights = self._match_all_is_dense(n_candidates, bloom_matrix, unique_ids_arr)
+
+            if final_edges is None:
+                final_edges = edges
+
+            if weights.ndim == 1:
+                weights = weights.reshape(-1, 1)
+            all_similarity_weights.append(weights)
+
+
+        return final_edges, np.hstack(all_similarity_weights)
+
     def _candidates(self,
             extract_candidates: Union[Dict[str, Block], EncodedData]) -> None:
 

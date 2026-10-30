@@ -1,4 +1,5 @@
 """PPRL Metablocking Methods"""
+import gc
 import sys
 from queue import PriorityQueue
 from itertools import chain
@@ -47,7 +48,7 @@ class AbstractComparisonCleaning(PPRLFeature):
         start_time = time()
         self.encoded_data = encoded_data
 
-        self.candidate_pairs : Dict[int, set] = defaultdict(set)
+        self.candidate_pairs : Dict[int, list] = {}
 
         # self.entity_ids, self.block_keys, = encoded_data.get_entity_id_block_key_pairs(
         #                                         adjacent_bits
@@ -498,7 +499,7 @@ class WeightedEdgePruning(AbstractMetablocking):
             end_idx = indptr[entity_id + 1]
             if start_idx < end_idx:
                 valid_neighbors = indices[start_idx:end_idx] + _limit
-                self.candidate_pairs[entity_id].update(valid_neighbors)
+                self.candidate_pairs[entity_id]  = valid_neighbors
 
         return self.candidate_pairs
 
@@ -556,20 +557,25 @@ class CardinalityEdgePruning(WeightedEdgePruning):
         else:
             top_k_1d_indices = np.argpartition(_weights.data, -k)[-k:]
 
-        row_indices = np.repeat(
-            np.arange(_weights.shape[0]),
-            np.diff(_weights.indptr)
-        )
+        valid_mask = _weights.data[top_k_1d_indices] > 0
+        top_k_1d_indices = top_k_1d_indices[valid_mask]
 
-        non_zero_mask = np.nonzero(_weights.data[top_k_1d_indices])[0]
+        row_indices = np.searchsorted(_weights.indptr,
+                                      top_k_1d_indices, side='right') - 1
+        col_indices = _weights.indices[top_k_1d_indices] + self.encoded_data.bounds[0]
 
-        # Apply the mask to keep only the valid indices
-        top_k_1d_indices = top_k_1d_indices[non_zero_mask]
+        sort_order = np.argsort(row_indices)
+        sorted_rows = row_indices[sort_order]
+        sorted_cols = col_indices[sort_order]
+
+        unique_rows, split_indices = np.unique(sorted_rows, return_index=True)
+
+        grouped_cols = np.split(sorted_cols, split_indices[1:])
 
 
-        for entity_id, neighbor_id in zip(row_indices[top_k_1d_indices],
-                            _weights.indices[top_k_1d_indices]):
-            self.candidate_pairs[entity_id].add(neighbor_id + self.encoded_data.bounds[0])
+        for row, cols in zip(unique_rows, grouped_cols):
+            self.candidate_pairs[row] = cols.tolist()
+
 
         return self.candidate_pairs
 
@@ -598,7 +604,10 @@ class CardinalityNodePruning(CardinalityEdgePruning):
         _counters = self._process_entities()
         _weights = self._get_weight(_counters)
 
-        self.candidate_pairs = defaultdict(set)
+        kept_rows = []
+        kept_cols = []
+        bounds_0 = self.encoded_data.bounds[0]
+
 
         for i in range(_weights.shape[0]):
             start_idx = _weights.indptr[i]
@@ -614,40 +623,60 @@ class CardinalityNodePruning(CardinalityEdgePruning):
             actual_k = min(self._threshold, row_len)
             if row_len > actual_k:
                 part_idx = np.argpartition(row_data, -actual_k)[-actual_k:]
-                non_zero_mask = np.nonzero(row_data[part_idx])[0]
-                part_idx = part_idx[non_zero_mask]
+                part_idx = part_idx[row_data[part_idx] > 0]
             else:
                 part_idx = np.nonzero(row_data)[0]
 
+            if part_idx.size > 0:
+                kept_rows.extend([i] * len(part_idx))
+                kept_cols.extend(row_cols[part_idx])
 
         # Apply the mask to keep only the valid indices
 
 
 
-            self.candidate_pairs[i].update(row_cols[part_idx] + self.encoded_data.bounds[0])
-
-        _weights_col = _weights.tocsc()
-        for j in range(_weights_col.shape[1]):
-            start_idx = _weights_col.indptr[j]
-            end_idx = _weights_col.indptr[j + 1]
+        _weights = _weights.tocsc()
+        gc.collect()
+        for j in range(_weights.shape[1]):
+            start_idx = _weights.indptr[j]
+            end_idx = _weights.indptr[j + 1]
             col_len = end_idx - start_idx
 
             if col_len == 0:
                 continue
 
-            col_data = _weights_col.data[start_idx:end_idx]
-            col_rows = _weights_col.indices[start_idx:end_idx]
+            col_data = _weights.data[start_idx:end_idx]
+            col_rows = _weights.indices[start_idx:end_idx]
 
             actual_k = min(self._threshold, col_len)
             if col_len > actual_k:
                 part_idx = np.argpartition(col_data, -actual_k)[-actual_k:]
-                non_zero_mask = np.nonzero(col_data[part_idx])[0]
-                part_idx = part_idx[non_zero_mask]
+                part_idx = part_idx[col_data[part_idx] > 0]
             else:
                 part_idx = np.nonzero(col_data)[0]
 
-            for e_id in col_rows[part_idx]:
-                self.candidate_pairs[int(e_id)].add(j + self.encoded_data.bounds[0])
+            if part_idx.size > 0:
+                kept_rows.extend(col_rows[part_idx])
+                kept_cols.extend([j] * len(part_idx))
+
+        if not kept_rows:
+            return {}
+
+        kept_rows = np.array(kept_rows, dtype=np.int32)
+        kept_cols = np.array(kept_cols, dtype=np.int32) + bounds_0
+
+        stacked  = np.stack((kept_rows, kept_cols), axis=1)
+        unique_edges = np.unique(stacked, axis=0)
+
+        sorted_rows = unique_edges[:, 0]
+        sorted_cols = unique_edges[:, 1]
+
+        unique_row_ids, split_indices = np.unique(sorted_rows, return_index=True)
+        grouped_cols = np.split(sorted_cols, split_indices[1:])
+
+        self.candidate_pairs = {}
+        for row, cols in zip(unique_row_ids, grouped_cols):
+            self.candidate_pairs[int(row)] = cols.tolist()
 
         return self.candidate_pairs
 
@@ -726,8 +755,33 @@ class WeightedNodePruning(WeightedEdgePruning):
         valid_rows = c.row[mask]
         valid_cols = c.col[mask] + self.encoded_data.bounds[0]
 
-        for entity_id, neighbor_id in zip(valid_rows, valid_cols):
-            self.candidate_pairs[entity_id].add(neighbor_id)
+        # Free the massive COO matrix and mask immediately
+        del c, mask
+        gc.collect()
+
+        if len(valid_rows) == 0:
+            return {}
+
+        sort_order = np.argsort(valid_rows)
+        sorted_rows = valid_rows[sort_order]
+        sorted_cols = valid_cols[sort_order]
+
+        # Free unsorted arrays
+        del valid_rows, valid_cols
+        gc.collect()
+
+        # 3. Find boundaries where the row ID changes
+        unique_rows, split_indices = np.unique(sorted_rows, return_index=True)
+
+        # 4. Chop the column array into chunks based on row boundaries
+        grouped_cols = np.split(sorted_cols, split_indices[1:])
+
+        # 5. Populate standard dict with standard lists (minimal memory overhead)
+        self.candidate_pairs = {}
+        for row, cols in zip(unique_rows, grouped_cols):
+            # np.unique safely acts like a set to remove duplicates, .tolist() saves RAM
+            self.candidate_pairs[row] = np.unique(cols).tolist()
+
         return self.candidate_pairs
 
 

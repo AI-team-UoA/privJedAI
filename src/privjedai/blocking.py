@@ -531,14 +531,18 @@ class FAISSBlocking(AbstractBlockBuilding):
 
 
 
-    def __init__(self, index_type: Literal['flat', 'hnsw', 'multihash'] = 'flat'):
+
+    def __init__(self, index_type: Literal['flat', 'hnsw', 'multihash', 'ivf'] = 'flat'):
         super().__init__()
         self.top_k: int = 1
         self.encoded_data: BloomEncodedData
+        self.flip : bool = False
         self.neighbors : np.ndarray
         self.distances : np.ndarray
-        self.index: faiss.IndexBinaryHNSW | faiss.IndexBinaryMultiHash | faiss.IndexBinaryFlat
+        self.index: faiss.IndexBinaryHNSW | faiss.IndexBinaryMultiHash | faiss.IndexBinaryFlat | \
+            faiss.IndexBinaryIVF
         self.configuration : Dict[str, Any] = {'index_type' : index_type.lower()}
+
 
     def _init_vector(self, bitarray_dict: dict):
         bitarray_list: List[bitarray] = [
@@ -556,6 +560,10 @@ class FAISSBlocking(AbstractBlockBuilding):
     def configure_hsnw(self, hnsw_m : int = 32):
         self.configuration['hnsw_m'] = hnsw_m
 
+    def configure_ivf(self, nlist : int = 32, nprobe : int = 8):
+        self.configuration['nlist'] = nlist
+        self.configuration['nprobe'] = nprobe
+
     def _set_index(self, vector_size: int):
         if 'hnsw' == self.configuration['index_type']:
             self.index = faiss.IndexBinaryHNSW(vector_size,
@@ -565,26 +573,37 @@ class FAISSBlocking(AbstractBlockBuilding):
             lambda_: int = 8
             psi = vector_size // lambda_
             self.index = faiss.IndexBinaryMultiHash(vector_size, lambda_, psi)
+        elif 'ivf' == self.configuration['index_type']:
+            nlist: int = self.configuration.get('nlist', 32)
+            self.index = faiss.IndexBinaryIVF(faiss.IndexBinaryFlat(vector_size), vector_size, nlist)
         else:
             self.index = faiss.IndexBinaryFlat(vector_size)
 
     def _create_blocks(self):
         blocks: Dict[int, set] = defaultdict(set)
         bitarray_dict: dict = self.encoded_data.bitarray_dict
+
         lower_bound = self.encoded_data.bounds[0]
-        bitarray_dict: Dict[int, Dict[str, bitarray]] = {k: v for k, v in bitarray_dict.items()
-                                                         if lower_bound <= k}
+
+        if self.flip:
+            bitarray_dict: Dict[int, Dict[str, bitarray]] = {k: v for k, v in bitarray_dict.items()
+                                                         if k < self.encoded_data.bounds[0]}
+        else:
+            bitarray_dict: Dict[int, Dict[str, bitarray]] = {k: v for k, v in bitarray_dict.items()
+                                                            if lower_bound <= k}
 
         vector, _ = self._init_vector(bitarray_dict)
 
 
         self.distances, self.neighbors = self.index.search(vector, self.top_k) #type: ignore
         for _entity in range(0, self.neighbors.shape[0]):
-            _entity_id = _entity + lower_bound
             for _neighbor_id in self.neighbors[_entity]:
                 if _neighbor_id < 0:
                     break
-                blocks[int(_neighbor_id)].add(_entity_id)
+                if self.flip:
+                    blocks[int(_entity)].add(int(_neighbor_id + lower_bound))
+                else:
+                    blocks[int(_neighbor_id)].add(int(_entity + lower_bound))
         return blocks
 
     def build_blocks(self,
@@ -598,11 +617,27 @@ class FAISSBlocking(AbstractBlockBuilding):
 
     def _fit(self):
         enc_bitarray_dict: dict = self.encoded_data.bitarray_dict
-        bitarray_dict: Dict[int, Dict[str, bitarray]] = {k: v for k, v in enc_bitarray_dict.items()
+
+        bitarray_dict: Dict[int, Dict[str, bitarray]] = {}
+
+        if self.encoded_data.bounds[0] < self.encoded_data.bounds[1] - self.encoded_data.bounds[0]:
+            self.flip = True
+            bitarray_dict: Dict[int, Dict[str, bitarray]] = {k: v for k, v in enc_bitarray_dict.items()
+                                                         if self.encoded_data.bounds[0] <= k }
+        else:
+            self.flip = False
+            bitarray_dict: Dict[int, Dict[str, bitarray]] = {k: v for k, v in enc_bitarray_dict.items()
                                                          if 0 <= k < self.encoded_data.bounds[0]}
+
         vector, bitarray_list = self._init_vector(bitarray_dict)
 
         self._set_index(len(bitarray_list[0]))
+
+        if self.configuration['index_type'] == 'ivf':
+            if not self.index.is_trained:
+                self.index.train(vector) #type: ignore
+            self.index.nprobe = self.configuration.get('nprobe', 8)
+
         self.index.add(vector) #type: ignore
 
 
